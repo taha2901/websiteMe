@@ -27,7 +27,7 @@ class OrdersHistoryScreen extends StatelessWidget {
                         _buildOrderCard(context, orders[index]),
                   ),
           ),
-          const Footer(),
+          // const Footer(),
         ],
       ),
     );

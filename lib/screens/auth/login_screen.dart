@@ -185,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ),
-            const Footer(),
+            // const Footer(),
           ],
         ),
       ),

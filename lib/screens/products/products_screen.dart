@@ -57,7 +57,7 @@ class ProductsScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const Footer(),
+            // const Footer(),
           ],
         ),
       ),

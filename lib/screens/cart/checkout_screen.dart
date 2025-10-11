@@ -103,7 +103,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
             ),
           ),
-          const Footer(),
+          // const Footer(),
         ],
       ),
     );

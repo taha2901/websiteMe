@@ -11,16 +11,19 @@ class Footer extends StatelessWidget {
     final isTablet = screenWidth >= 600 && screenWidth < 1024;
 
     return Container(
+      width: double.infinity, 
       color: AppColors.textPrimary,
       padding: EdgeInsets.symmetric(
-        horizontal: isDesktop ? 48 : 24,
+        horizontal: isDesktop
+            ? 48
+            : (isTablet ? 24 : 0), // 👈 بدون padding على الموبايل
         vertical: isDesktop ? 48 : 32,
       ),
       child: isDesktop
           ? _buildDesktopFooter()
           : isTablet
-              ? _buildTabletFooter()
-              : _buildMobileFooter(),
+          ? _buildTabletFooter()
+          : _buildMobileFooter(),
     );
   }
 
@@ -33,10 +36,7 @@ class Footer extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Logo & Description
-            Expanded(
-              flex: 2,
-              child: _footerLogoSection(),
-            ),
+            Expanded(flex: 2, child: _footerLogoSection()),
             const SizedBox(width: 24),
             // Footer Columns
             Expanded(
@@ -49,19 +49,19 @@ class Footer extends StatelessWidget {
                     'All Products',
                     'Categories',
                     'Deals',
-                    'New Arrivals'
+                    'New Arrivals',
                   ]),
                   _footerColumn('Support', [
                     'Help Center',
                     'Track Order',
                     'Returns',
-                    'Shipping'
+                    'Shipping',
                   ]),
                   _footerColumn('Company', [
                     'About Us',
                     'Careers',
                     'Contact',
-                    'Blog'
+                    'Blog',
                   ]),
                 ],
               ),
@@ -81,11 +81,15 @@ class Footer extends StatelessWidget {
             ),
             Row(
               children: [
-                Text('Privacy Policy',
-                    style: TextStyle(color: AppColors.textLight, fontSize: 14)),
+                Text(
+                  'Privacy Policy',
+                  style: TextStyle(color: AppColors.textLight, fontSize: 14),
+                ),
                 SizedBox(width: 24),
-                Text('Terms of Service',
-                    style: TextStyle(color: AppColors.textLight, fontSize: 14)),
+                Text(
+                  'Terms of Service',
+                  style: TextStyle(color: AppColors.textLight, fontSize: 14),
+                ),
               ],
             ),
           ],
@@ -109,19 +113,19 @@ class Footer extends StatelessWidget {
               'All Products',
               'Categories',
               'Deals',
-              'New Arrivals'
+              'New Arrivals',
             ]),
             _footerColumn('Support', [
               'Help Center',
               'Track Order',
               'Returns',
-              'Shipping'
+              'Shipping',
             ]),
             _footerColumn('Company', [
               'About Us',
               'Careers',
               'Contact',
-              'Blog'
+              'Blog',
             ]),
           ],
         ),
@@ -139,38 +143,48 @@ class Footer extends StatelessWidget {
   }
 
   // ----------------- Mobile Footer -----------------
+  // ----------------- Mobile Footer (محسّن) -----------------
   Widget _buildMobileFooter() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        _footerLogoSection(),
-        const SizedBox(height: 32),
-        _footerColumn('Shop', [
-          'All Products',
-          'Categories',
-          'Deals',
-          'New Arrivals'
-        ]),
-        const SizedBox(height: 16),
-        _footerColumn('Support', [
-          'Help Center',
-          'Track Order',
-          'Returns',
-          'Shipping'
-        ]),
-        const SizedBox(height: 16),
-        _footerColumn('Company', [
-          'About Us',
-          'Careers',
-          'Contact',
-          'Blog'
-        ]),
+        // Logo & Description
+        Center(child: _footerLogoSection()),
+        const SizedBox(height: 24),
+
+        // Columns in Wrap (بدل ما تكون عمودية بالكامل)
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 40,
+          runSpacing: 24,
+          children: [
+            _footerColumn('Shop', ['All Products', 'Categories', 'Deals']),
+            _footerColumn('Support', ['Help Center', 'Track Order']),
+            _footerColumn('Company', ['About Us', 'Contact']),
+          ],
+        ),
+
         const SizedBox(height: 32),
         const Divider(color: AppColors.textLight),
+
+        // Social Media Row
+        const SizedBox(height: 16),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 12,
+          children: [
+            _socialIcon(Icons.facebook),
+            _socialIcon(Icons.link),
+            _socialIcon(Icons.email),
+            _socialIcon(Icons.phone),
+          ],
+        ),
+
         const SizedBox(height: 16),
         const Text(
           '© 2025 ShopPro. All rights reserved.',
-          style: TextStyle(color: AppColors.textLight, fontSize: 13),
+          textAlign: TextAlign.center,
+          style: TextStyle(color: AppColors.textLight, fontSize: 12),
         ),
       ],
     );

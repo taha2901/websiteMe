@@ -83,7 +83,7 @@ class _CartScreenState extends State<CartScreen> {
                     ),
                   ),
           ),
-          const Footer(),
+          // const Footer(),
         ],
       ),
     );

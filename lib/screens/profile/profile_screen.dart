@@ -169,7 +169,7 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
           ),
-          const Footer(),
+          // const Footer(),
         ],
       ),
     );

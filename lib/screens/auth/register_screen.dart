@@ -229,7 +229,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
             ),
-            const Footer(),
+            // const Footer(),
           ],
         ),
       ),
