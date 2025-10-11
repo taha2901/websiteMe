@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../models/product.dart';
 import '../core/constants/app_colors.dart';
 
 class ProductCard extends StatefulWidget {
   final Product product;
-
   const ProductCard({super.key, required this.product});
 
   @override
@@ -22,60 +22,70 @@ class _ProductCardState extends State<ProductCard> {
     final isDesktop = width >= 1000;
 
     final double imageHeight = isMobile
-        ? 160
+        ? 150
         : isTablet
-            ? 200
-            : 220;
+        ? 190
+        : 220;
 
     final double fontSizeTitle = isDesktop ? 16 : (isTablet ? 15 : 14);
     final double fontSizePrice = isDesktop ? 20 : (isTablet ? 18 : 16);
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: GestureDetector(
-        onTap: () => Navigator.pushNamed(
-          context,
-          '/product-detail',
-          arguments: widget.product,
-        ),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(8.0),
-          transform: _isHovered
-              ? (Matrix4.identity()..scale(1.02))
-              : Matrix4.identity(),
-          child: Card(
-            elevation: _isHovered ? 8 : 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                // لو المساحة كبيرة، نعرض الصورة على الشمال والمحتوى على اليمين
-                final isHorizontal = constraints.maxWidth > 400 && isDesktop;
-
-                return isHorizontal
-                    ? Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildImage(imageHeight, isHorizontal: true),
-                          Expanded(child: _buildInfo(fontSizeTitle, fontSizePrice)),
-                        ],
-                      )
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildImage(imageHeight),
-                          _buildInfo(fontSizeTitle, fontSizePrice),
-                        ],
-                      );
-              },
-            ),
+    final card = GestureDetector(
+      onTap: () => Navigator.pushNamed(
+        context,
+        '/product-detail',
+        arguments: widget.product,
+      ),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        transform: _isHovered
+            ? (Matrix4.identity()..scale(1.02))
+            : Matrix4.identity(),
+        child: Card(
+          elevation: _isHovered ? 8 : 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isHorizontal = constraints.maxWidth > 500 && isDesktop;
+              return isHorizontal
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildImage(imageHeight, isHorizontal: true),
+                        Expanded(
+                          child: _buildInfo(
+                            fontSizeTitle,
+                            fontSizePrice,
+                            isMobile,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildImage(imageHeight),
+                        _buildInfo(fontSizeTitle, fontSizePrice, isMobile),
+                      ],
+                    );
+            },
           ),
         ),
       ),
+    );
+
+    // ✅ Hover شغال بس على الويب
+    return MouseRegion(
+      onEnter: (_) {
+        if (isDesktop) setState(() => _isHovered = true);
+      },
+      onExit: (_) {
+        if (isDesktop) setState(() => _isHovered = false);
+      },
+      child: card,
     );
   }
 
@@ -85,10 +95,7 @@ class _ProductCardState extends State<ProductCard> {
         SizedBox(
           width: isHorizontal ? 220 : double.infinity,
           height: height,
-          child: Image.network(
-            widget.product.image,
-            fit: BoxFit.cover,
-          ),
+          child: Image.network(widget.product.image, fit: BoxFit.cover),
         ),
         if (widget.product.isOnSale)
           Positioned(
@@ -111,19 +118,12 @@ class _ProductCardState extends State<ProductCard> {
             ),
           ),
         Positioned(
-          top: 12,
-          right: 12,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                ),
-              ],
-            ),
+          top: 10,
+          right: 10,
+          child: Material(
+            color: Colors.white,
+            shape: const CircleBorder(),
+            elevation: 2,
             child: IconButton(
               icon: const Icon(Icons.favorite_border),
               iconSize: 20,
@@ -143,20 +143,17 @@ class _ProductCardState extends State<ProductCard> {
     );
   }
 
-  Widget _buildInfo(double fontSizeTitle, double fontSizePrice) {
+  Widget _buildInfo(double fontSizeTitle, double fontSizePrice, bool isMobile) {
     return Padding(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(isMobile ? 10.w : 14.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             widget.product.category,
-            style: const TextStyle(
-              color: AppColors.textLight,
-              fontSize: 12,
-            ),
+            style: TextStyle(color: AppColors.textLight, fontSize: 12.sp),
           ),
-          const SizedBox(height: 4),
+           SizedBox(height: 2.h),
           Text(
             widget.product.name,
             maxLines: 2,
@@ -166,28 +163,28 @@ class _ProductCardState extends State<ProductCard> {
               fontSize: fontSizeTitle,
             ),
           ),
-          const SizedBox(height: 8),
+           SizedBox(height: 4.h),
           Row(
             children: [
-              const Icon(Icons.star, color: Colors.amber, size: 16),
-              const SizedBox(width: 4),
+               Icon(Icons.star, color: Colors.amber, size: 16.w),
+               SizedBox(width: 4.w),
               Text(
                 widget.product.rating.toStringAsFixed(1),
-                style: const TextStyle(
+                style:  TextStyle(
                   fontWeight: FontWeight.w500,
-                  fontSize: 13,
+                  fontSize: 13.sp,
                 ),
               ),
               Text(
                 ' (${widget.product.reviewsCount})',
-                style: const TextStyle(
+                style:  TextStyle(
                   color: AppColors.textLight,
-                  fontSize: 12,
+                  fontSize: 12.sp,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+           SizedBox(height: 10.h),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -197,10 +194,10 @@ class _ProductCardState extends State<ProductCard> {
                   if (widget.product.isOnSale)
                     Text(
                       '\$${widget.product.price.toStringAsFixed(2)}',
-                      style: const TextStyle(
+                      style:  TextStyle(
                         decoration: TextDecoration.lineThrough,
                         color: AppColors.textLight,
-                        fontSize: 12,
+                        fontSize: 12.sp,
                       ),
                     ),
                   Text(
@@ -235,4 +232,3 @@ class _ProductCardState extends State<ProductCard> {
     );
   }
 }
-

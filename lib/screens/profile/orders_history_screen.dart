@@ -9,22 +9,22 @@ class OrdersHistoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Demo orders
-    final orders = <Order>[];
+    // 🧾 Demo orders (مؤقتًا فارغ)
+    final List<Order> orders = [];
 
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: const Navbar(),
       body: Column(
         children: [
           Expanded(
             child: orders.isEmpty
-                ? _buildEmptyState()
+                ? _buildEmptyState(context)
                 : ListView.builder(
                     padding: const EdgeInsets.all(24),
                     itemCount: orders.length,
-                    itemBuilder: (context, index) {
-                      return _buildOrderCard(orders[index]);
-                    },
+                    itemBuilder: (context, index) =>
+                        _buildOrderCard(context, orders[index]),
                   ),
           ),
           const Footer(),
@@ -33,42 +33,63 @@ class OrdersHistoryScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState() {
+  // 🕳️ حالة لا توجد طلبات
+  Widget _buildEmptyState(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.receipt_long_outlined,
-              size: 100, color: AppColors.textLight),
-          const SizedBox(height: 24),
-          const Text(
-            'No Orders Yet',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.receipt_long_outlined,
+                size: 100, color: AppColors.textLight),
+            const SizedBox(height: 24),
+            const Text(
+              'No Orders Yet',
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Your order history will appear here',
-            style: TextStyle(
-              fontSize: 16,
-              color: AppColors.textLight,
+            const SizedBox(height: 12),
+            Text(
+              'Your order history will appear here once you make a purchase.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                color: AppColors.textLight,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pushNamed(context, '/');
+              },
+              icon: const Icon(Icons.shopping_bag_outlined),
+              label: const Text('Start Shopping'),
+              style: ElevatedButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildOrderCard(Order order) {
+  // 📦 بطاقة الطلب
+  Widget _buildOrderCard(BuildContext context, Order order) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 20),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 🧾 رأس البطاقة (رقم الطلب + الحالة)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -82,42 +103,72 @@ class OrdersHistoryScreen extends StatelessWidget {
                 _buildStatusChip(order.status),
               ],
             ),
-            const Divider(height: 24),
-            ...order.items.map((item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          item.product.image,
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.cover,
-                        ),
+            const SizedBox(height: 6),
+            Text(
+              'Placed on ${order.orderDate}',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const Divider(height: 28),
+
+            // 🛍️ قائمة المنتجات داخل الطلب
+            ...order.items.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        item.product.image,
+                        width: 50,
+                        height: 50,
+                        fit: BoxFit.cover,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(item.product.name),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        item.product.name,
+                        style: const TextStyle(fontSize: 15),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      Text('x${item.quantity}'),
-                    ],
-                  ),
-                )),
-            const Divider(height: 24),
+                    ),
+                    Text('x${item.quantity}',
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+            ),
+
+            const Divider(height: 28),
+
+            // 💰 الإجمالي + زر التفاصيل
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Total: \${order.total.toStringAsFixed(2)}',
+                  'Total: \$${order.total.toStringAsFixed(2)}',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                OutlinedButton(
-                  onPressed: () {},
-                  child: const Text('View Details'),
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      context,
+                      '/order-details',
+                      arguments: order,
+                    );
+                  },
+                  icon: const Icon(Icons.visibility_outlined),
+                  label: const Text('View Details'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                  ),
                 ),
               ],
             ),
@@ -127,9 +178,10 @@ class OrdersHistoryScreen extends StatelessWidget {
     );
   }
 
+  // 🟢 حالة الطلب
   Widget _buildStatusChip(OrderStatus status) {
-    Color color;
-    String label;
+    late final Color color;
+    late final String label;
 
     switch (status) {
       case OrderStatus.pending:
@@ -164,7 +216,7 @@ class OrdersHistoryScreen extends StatelessWidget {
         label,
         style: TextStyle(
           color: color,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w600,
           fontSize: 12,
         ),
       ),

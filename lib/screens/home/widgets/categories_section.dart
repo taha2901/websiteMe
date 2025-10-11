@@ -1,105 +1,5 @@
-// import 'package:flutter/material.dart';
-// import 'package:provider/provider.dart';
-// import '../../../providers/product_provider.dart';
-// import '../../../core/constants/app_colors.dart';
-
-// class CategoriesSection extends StatelessWidget {
-//   const CategoriesSection({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final categories = context.watch<ProductProvider>().categories;
-//     final isDesktop = MediaQuery.of(context).size.width >= 900;
-
-//     return Container(
-//       padding: const EdgeInsets.symmetric(horizontal: 24),
-//       child: Column(
-//         children: [
-//           const Text(
-//             'Shop by Category',
-//             style: TextStyle(
-//               fontSize: 32,
-//               fontWeight: FontWeight.bold,
-//             ),
-//           ),
-//           const SizedBox(height: 8),
-//           Text(
-//             'Find what you need from our wide selection',
-//             style: TextStyle(
-//               fontSize: 16,
-//               color: AppColors.textLight,
-//             ),
-//           ),
-//           const SizedBox(height: 40),
-//           GridView.builder(
-//             shrinkWrap: true,
-//             physics: const NeverScrollableScrollPhysics(),
-//             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-//               crossAxisCount: isDesktop ? 6 : 3,
-//               crossAxisSpacing: 16,
-//               mainAxisSpacing: 16,
-//               childAspectRatio: 0.85,
-//             ),
-//             itemCount: categories.length,
-//             itemBuilder: (context, index) {
-//               final category = categories[index];
-//               return GestureDetector(
-//                 onTap: () {
-//                   context.read<ProductProvider>().setSelectedCategory(category.name);
-//                   Navigator.pushNamed(context, '/products');
-//                 },
-//                 child: Card(
-//                   elevation: 2,
-//                   shape: RoundedRectangleBorder(
-//                     borderRadius: BorderRadius.circular(16),
-//                   ),
-//                   child: Column(
-//                     mainAxisAlignment: MainAxisAlignment.center,
-//                     children: [
-//                       Container(
-//                         width: 60,
-//                         height: 60,
-//                         decoration: BoxDecoration(
-//                           color: AppColors.primary.withOpacity(0.1),
-//                           borderRadius: BorderRadius.circular(12),
-//                         ),
-//                         child: Center(
-//                           child: Text(
-//                             category.icon,
-//                             style: const TextStyle(fontSize: 32),
-//                           ),
-//                         ),
-//                       ),
-//                       const SizedBox(height: 12),
-//                       Text(
-//                         category.name,
-//                         style: const TextStyle(
-//                           fontWeight: FontWeight.w600,
-//                           fontSize: 14,
-//                         ),
-//                       ),
-//                       const SizedBox(height: 4),
-//                       Text(
-//                         '${category.productsCount} items',
-//                         style: const TextStyle(
-//                           color: AppColors.textLight,
-//                           fontSize: 12,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ),
-//               );
-//             },
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:websiteme/models/category.dart';
 import '../../../core/constants/app_colors.dart';
 
@@ -109,96 +9,141 @@ class CategoriesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final categories = demoCategories;
-    final isDesktop = MediaQuery.of(context).size.width >= 900;
+    final width = MediaQuery.of(context).size.width;
+
+    final bool isMobile = width < 600;
+    final bool isTablet = width >= 600 && width < 1000;
+    final bool isDesktop = width >= 1000;
+
+    // عدد الأعمدة حسب حجم الشاشة
+    final int crossAxisCount = isDesktop
+        ? 6
+        : isTablet
+            ? 4
+            : 2;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 40.h),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Text(
+          // 🏷️ العنوان الرئيسي
+          Text(
             'Shop by Category',
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 32,
+              fontSize: isDesktop ? 32.sp : (isTablet ? 26.sp : 22.sp),
               fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h),
           Text(
             'Find what you need from our wide selection',
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: isDesktop ? 16.sp : 14.sp,
               color: AppColors.textLight,
             ),
           ),
-          const SizedBox(height: 40),
+          SizedBox(height: 36.h),
 
-          // ✅ الشبكة اللي بتعرض التصنيفات
+          // 🧩 شبكة التصنيفات
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: isDesktop ? 6 : 3,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 0.85,
-            ),
             itemCount: categories.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: 16.w,
+              mainAxisSpacing: 16.h,
+              childAspectRatio: isMobile ? 0.9 : 0.85,
+            ),
             itemBuilder: (context, index) {
               final category = categories[index];
-              return GestureDetector(
-                onTap: () {
-                  // بدل استخدام Provider ممكن نخليها تروح صفحة المنتجات مباشرة
-                  Navigator.pushNamed(
-                    context,
-                    '/products',
-                    arguments: {'category': category.name},
-                  );
-                },
-                child: Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Center(
-                          child: Text(
-                            category.icon,
-                            style: const TextStyle(fontSize: 32),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        category.name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${category.productsCount} items',
-                        style: const TextStyle(
-                          color: AppColors.textLight,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
+              return _CategoryCard(category: category);
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CategoryCard extends StatelessWidget {
+  final CategoryModel category;
+  const _CategoryCard({required this.category});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(16.r),
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          '/products',
+          arguments: {'category': category.name},
+        );
+      },
+      child: Ink(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: AppColors.border.withOpacity(0.4)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(12.w),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // أيقونة الفئة
+              Container(
+                width: 64.w,
+                height: 64.w,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Center(
+                  child: Text(
+                    category.icon,
+                    style: TextStyle(fontSize: 32.sp),
+                  ),
+                ),
+              ),
+              SizedBox(height: 10.h),
+
+              // الاسم
+              Text(
+                category.name,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14.sp,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 4.h),
+
+              // عدد المنتجات
+              Text(
+                '${category.productsCount} items',
+                style: TextStyle(
+                  color: AppColors.textLight,
+                  fontSize: 12.sp,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

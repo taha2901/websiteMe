@@ -23,7 +23,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final authProvider = context.watch<AuthProvider>();
 
     return Scaffold(
-      appBar: const Navbar(),
       body: SingleChildScrollView(
         child: Column(
           children: [

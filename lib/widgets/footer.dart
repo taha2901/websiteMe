@@ -6,83 +6,86 @@ class Footer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = MediaQuery.of(context).size.width >= 900;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth >= 1024;
+    final isTablet = screenWidth >= 600 && screenWidth < 1024;
 
     return Container(
       color: AppColors.textPrimary,
-      padding: EdgeInsets.all(isDesktop ? 48 : 24),
-      child: isDesktop ? _buildDesktopFooter() : _buildMobileFooter(),
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 48 : 24,
+        vertical: isDesktop ? 48 : 32,
+      ),
+      child: isDesktop
+          ? _buildDesktopFooter()
+          : isTablet
+              ? _buildTabletFooter()
+              : _buildMobileFooter(),
     );
   }
 
+  // ----------------- Desktop Footer -----------------
   Widget _buildDesktopFooter() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Logo & Description
             Expanded(
               flex: 2,
-              child: Column(
+              child: _footerLogoSection(),
+            ),
+            const SizedBox(width: 24),
+            // Footer Columns
+            Expanded(
+              flex: 3,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [AppColors.primary, AppColors.secondary],
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.shopping_bag, color: Colors.white),
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'ShopPro',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Your premium shopping destination for quality products at the best prices.',
-                    style: TextStyle(color: AppColors.textLight),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      _socialIcon(Icons.facebook),
-                      _socialIcon(Icons.link),
-                      _socialIcon(Icons.email),
-                      _socialIcon(Icons.phone),
-                    ],
-                  ),
+                  _footerColumn('Shop', [
+                    'All Products',
+                    'Categories',
+                    'Deals',
+                    'New Arrivals'
+                  ]),
+                  _footerColumn('Support', [
+                    'Help Center',
+                    'Track Order',
+                    'Returns',
+                    'Shipping'
+                  ]),
+                  _footerColumn('Company', [
+                    'About Us',
+                    'Careers',
+                    'Contact',
+                    'Blog'
+                  ]),
                 ],
               ),
             ),
-            _footerColumn('Shop', ['All Products', 'Categories', 'Deals', 'New Arrivals']),
-            _footerColumn('Support', ['Help Center', 'Track Order', 'Returns', 'Shipping']),
-            _footerColumn('Company', ['About Us', 'Careers', 'Contact', 'Blog']),
           ],
         ),
-        const Divider(color: AppColors.textLight, height: 48),
+        const SizedBox(height: 40),
+        const Divider(color: AppColors.textLight),
+        const SizedBox(height: 24),
+        // Bottom Row
         const Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('© 2025 ShopPro. All rights reserved.', 
-                 style: TextStyle(color: AppColors.textLight)),
+            Text(
+              '© 2025 ShopPro. All rights reserved.',
+              style: TextStyle(color: AppColors.textLight, fontSize: 14),
+            ),
             Row(
               children: [
-                Text('Privacy Policy', style: TextStyle(color: AppColors.textLight)),
+                Text('Privacy Policy',
+                    style: TextStyle(color: AppColors.textLight, fontSize: 14)),
                 SizedBox(width: 24),
-                Text('Terms of Service', style: TextStyle(color: AppColors.textLight)),
+                Text('Terms of Service',
+                    style: TextStyle(color: AppColors.textLight, fontSize: 14)),
               ],
             ),
           ],
@@ -91,32 +94,139 @@ class Footer extends StatelessWidget {
     );
   }
 
+  // ----------------- Tablet Footer -----------------
+  Widget _buildTabletFooter() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _footerLogoSection(),
+        const SizedBox(height: 32),
+        Wrap(
+          spacing: 32,
+          runSpacing: 24,
+          children: [
+            _footerColumn('Shop', [
+              'All Products',
+              'Categories',
+              'Deals',
+              'New Arrivals'
+            ]),
+            _footerColumn('Support', [
+              'Help Center',
+              'Track Order',
+              'Returns',
+              'Shipping'
+            ]),
+            _footerColumn('Company', [
+              'About Us',
+              'Careers',
+              'Contact',
+              'Blog'
+            ]),
+          ],
+        ),
+        const SizedBox(height: 32),
+        const Divider(color: AppColors.textLight),
+        const SizedBox(height: 16),
+        const Center(
+          child: Text(
+            '© 2025 ShopPro. All rights reserved.',
+            style: TextStyle(color: AppColors.textLight, fontSize: 13),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ----------------- Mobile Footer -----------------
   Widget _buildMobileFooter() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _footerLogoSection(),
+        const SizedBox(height: 32),
+        _footerColumn('Shop', [
+          'All Products',
+          'Categories',
+          'Deals',
+          'New Arrivals'
+        ]),
+        const SizedBox(height: 16),
+        _footerColumn('Support', [
+          'Help Center',
+          'Track Order',
+          'Returns',
+          'Shipping'
+        ]),
+        const SizedBox(height: 16),
+        _footerColumn('Company', [
+          'About Us',
+          'Careers',
+          'Contact',
+          'Blog'
+        ]),
+        const SizedBox(height: 32),
+        const Divider(color: AppColors.textLight),
+        const SizedBox(height: 16),
         const Text(
-          'ShopPro',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          '© 2025 ShopPro. All rights reserved.',
+          style: TextStyle(color: AppColors.textLight, fontSize: 13),
+        ),
+      ],
+    );
+  }
+
+  // ----------------- Shared Widgets -----------------
+  Widget _footerLogoSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Logo
+        Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.primary, AppColors.secondary],
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.shopping_bag, color: Colors.white),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'ShopPro',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         const Text(
-          'Your premium shopping destination.',
-          style: TextStyle(color: AppColors.textLight),
+          'Your premium shopping destination for quality products at the best prices.',
+          style: TextStyle(color: AppColors.textLight, fontSize: 14),
         ),
-        const SizedBox(height: 24),
-        const Text('© 2025 ShopPro. All rights reserved.',
-                   style: TextStyle(color: AppColors.textLight)),
+        const SizedBox(height: 20),
+        Row(
+          children: [
+            _socialIcon(Icons.facebook),
+            _socialIcon(Icons.link),
+            _socialIcon(Icons.email),
+            _socialIcon(Icons.phone),
+          ],
+        ),
       ],
     );
   }
 
   Widget _footerColumn(String title, List<String> items) {
-    return Expanded(
+    return SizedBox(
+      width: 160,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -129,10 +239,18 @@ class Footer extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          ...items.map((item) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Text(item, style: const TextStyle(color: AppColors.textLight)),
-              )),
+          ...items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Text(
+                item,
+                style: const TextStyle(
+                  color: AppColors.textLight,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -140,13 +258,13 @@ class Footer extends StatelessWidget {
 
   Widget _socialIcon(IconData icon) {
     return Container(
-      margin: const EdgeInsets.only(right: 12),
+      margin: const EdgeInsets.only(right: 10),
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Icon(icon, color: Colors.white, size: 20),
+      child: Icon(icon, color: Colors.white, size: 18),
     );
   }
 }
