@@ -3,7 +3,6 @@ import 'package:websiteme/core/constants/app_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/cart_item.dart';
 import '../../widgets/navbar.dart';
-import '../../widgets/footer.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -143,6 +142,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           const SizedBox(height: 16),
           _buildField('Phone Number', keyboard: TextInputType.phone),
+          const SizedBox(height: 12),
         ],
       ),
     );
