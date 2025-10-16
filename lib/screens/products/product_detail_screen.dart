@@ -4,6 +4,37 @@ import '../../widgets/navbar.dart';
 import '../../widgets/footer.dart';
 import '../../core/constants/app_colors.dart';
 
+/// ✅ Widget عامة لتحديد تخطيط الشاشة حسب الحجم
+class ResponsiveLayout extends StatelessWidget {
+  final Widget mobile;
+  final Widget tablet;
+  final Widget desktop;
+
+  const ResponsiveLayout({
+    super.key,
+    required this.mobile,
+    required this.tablet,
+    required this.desktop,
+  });
+
+  static bool isMobile(BuildContext context) =>
+      MediaQuery.of(context).size.width < 600;
+  static bool isTablet(BuildContext context) =>
+      MediaQuery.of(context).size.width >= 600 &&
+      MediaQuery.of(context).size.width < 1024;
+  static bool isDesktop(BuildContext context) =>
+      MediaQuery.of(context).size.width >= 1024;
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+
+    if (width >= 1024) return desktop;
+    if (width >= 600) return tablet;
+    return mobile;
+  }
+}
+
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
 
@@ -20,53 +51,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isDesktop = screenWidth >= 1024;
-    final isTablet = screenWidth >= 600 && screenWidth < 1024;
-
     return Scaffold(
       appBar: const Navbar(),
       body: SingleChildScrollView(
         child: Center(
           child: Container(
             constraints: const BoxConstraints(maxWidth: 1200),
-            padding: EdgeInsets.symmetric(
-              horizontal: isDesktop ? 32 : 16,
-              vertical: isDesktop ? 24 : 12,
-            ),
-            child: Column(
-              children: [
-                // --- Product Main Section ---
-                Flex(
-                  direction: isDesktop ? Axis.horizontal : Axis.vertical,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Image Section
-                    Flexible(
-                      flex: 1,
-                      child: _buildImageGallery(
-                        height: isDesktop
-                            ? 500
-                            : isTablet
-                            ? 400
-                            : 300,
-                      ),
-                    ),
-                    SizedBox(
-                      width: isDesktop ? 48 : 0,
-                      height: isDesktop ? 0 : 24,
-                    ),
-                    // Info Section
-                    Flexible(
-                      flex: 1,
-                      child: _buildProductInfo(isTablet: isTablet),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 40),
-                _buildProductDetails(),
-              ],
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            child: ResponsiveLayout(
+              mobile: _buildContent(isTablet: false, isDesktop: false),
+              tablet: _buildContent(isTablet: true, isDesktop: false),
+              desktop: _buildContent(isTablet: false, isDesktop: true),
             ),
           ),
         ),
@@ -74,10 +69,44 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
+  Widget _buildContent({required bool isTablet, required bool isDesktop}) {
+    return Column(
+      children: [
+        // ✅ القسم الرئيسي: الصور + تفاصيل المنتج
+        Flex(
+          direction: isDesktop ? Axis.horizontal : Axis.vertical,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Flexible(
+              flex: 1,
+              child: _buildImageGallery(
+                height: isDesktop
+                    ? 500
+                    : isTablet
+                        ? 400
+                        : 300,
+              ),
+            ),
+            SizedBox(
+              width: isDesktop ? 48 : 0,
+              height: isDesktop ? 0 : 24,
+            ),
+            Flexible(
+              flex: 1,
+              child: _buildProductInfo(isTablet: isTablet),
+            ),
+          ],
+        ),
+        const SizedBox(height: 40),
+        _buildProductDetails(),
+      ],
+    );
+  }
+
+  /// 🖼️ معرض الصور
   Widget _buildImageGallery({required double height}) {
     return Column(
       children: [
-        // --- Main Image ---
         Container(
           height: height,
           decoration: BoxDecoration(
@@ -94,7 +123,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        // --- Thumbnails ---
         SizedBox(
           height: 70,
           child: ListView.builder(
@@ -130,6 +158,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
+  /// 🧾 تفاصيل المنتج
   Widget _buildProductInfo({required bool isTablet}) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: isTablet ? 8 : 0),
@@ -153,77 +182,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Rating
-          Row(
-            children: [
-              ...List.generate(5, (index) {
-                return Icon(
-                  index < widget.product.rating.floor()
-                      ? Icons.star
-                      : Icons.star_border,
-                  color: Colors.amber,
-                  size: 22,
-                );
-              }),
-              const SizedBox(width: 8),
-              Text(
-                '${widget.product.rating} (${widget.product.reviewsCount} reviews)',
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 15,
-                ),
-              ),
-            ],
-          ),
+          _buildRating(),
           const SizedBox(height: 24),
 
-          // Price
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              if (widget.product.isOnSale) ...[
-                Text(
-                  '\$${widget.product.price.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    decoration: TextDecoration.lineThrough,
-                    color: AppColors.textLight,
-                    fontSize: 18,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.error,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    'Save ${widget.product.discountPercentage}%',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-              ],
-              Text(
-                '\$${widget.product.finalPrice.toStringAsFixed(2)}',
-                style: TextStyle(
-                  fontSize: isTablet ? 30 : 26,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
-          ),
+          _buildPrice(isTablet),
           const SizedBox(height: 24),
 
-          // Description
           Text(
             widget.product.description,
             style: const TextStyle(
@@ -234,132 +198,199 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
           const SizedBox(height: 28),
 
-          // Features
-          const Text(
-            'Key Features:',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+          _buildFeatures(),
+          const SizedBox(height: 28),
+
+          _buildStock(),
+          const SizedBox(height: 24),
+
+          _buildQuantitySection(),
+          const SizedBox(height: 28),
+
+          _buildActionButtons(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRating() {
+    return Row(
+      children: [
+        ...List.generate(5, (index) {
+          return Icon(
+            index < widget.product.rating.floor()
+                ? Icons.star
+                : Icons.star_border,
+            color: Colors.amber,
+            size: 22,
+          );
+        }),
+        const SizedBox(width: 8),
+        Text(
+          '${widget.product.rating} (${widget.product.reviewsCount} reviews)',
+          style: const TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 15,
           ),
-          const SizedBox(height: 10),
-          ...widget.product.features.map(
-            (feature) => Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.check_circle,
-                    color: AppColors.success,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(feature, style: const TextStyle(fontSize: 14)),
-                  ),
-                ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPrice(bool isTablet) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        if (widget.product.isOnSale) ...[
+          Text(
+            '\$${widget.product.price.toStringAsFixed(2)}',
+            style: const TextStyle(
+              decoration: TextDecoration.lineThrough,
+              color: AppColors.textLight,
+              fontSize: 18,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.error,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              'Save ${widget.product.discountPercentage}%',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
               ),
             ),
           ),
-
-          const SizedBox(height: 28),
-
-          // Stock
-          Row(
-            children: [
-              Icon(
-                widget.product.stock > 10 ? Icons.check_circle : Icons.warning,
-                color: widget.product.stock > 10
-                    ? AppColors.success
-                    : AppColors.warning,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                widget.product.stock > 10
-                    ? 'In Stock'
-                    : 'Only ${widget.product.stock} left',
-                style: TextStyle(
-                  color: widget.product.stock > 10
-                      ? AppColors.success
-                      : AppColors.warning,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+          const SizedBox(width: 12),
+        ],
+        Text(
+          '\$${widget.product.finalPrice.toStringAsFixed(2)}',
+          style: TextStyle(
+            fontSize: isTablet ? 30 : 26,
+            fontWeight: FontWeight.bold,
+            color: AppColors.primary,
           ),
+        ),
+      ],
+    );
+  }
 
-          const SizedBox(height: 24),
-
-          // Quantity
-          const Text(
-            'Quantity:',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+  Widget _buildFeatures() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Key Features:',
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 10),
+        ...widget.product.features.map(
+          (feature) => Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Row(
+              children: [
+                const Icon(Icons.check_circle,
+                    color: AppColors.success, size: 18),
+                const SizedBox(width: 8),
+                Flexible(child: Text(feature, style: const TextStyle(fontSize: 14))),
+              ],
+            ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              _buildQuantityButton(
-                Icons.remove,
-                _quantity > 1 ? () => setState(() => _quantity--) : null,
-              ),
-              Container(
-                width: 50,
-                alignment: Alignment.center,
-                child: Text(
-                  '$_quantity',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStock() {
+    return Row(
+      children: [
+        Icon(
+          widget.product.stock > 10 ? Icons.check_circle : Icons.warning,
+          color: widget.product.stock > 10
+              ? AppColors.success
+              : AppColors.warning,
+          size: 20,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          widget.product.stock > 10
+              ? 'In Stock'
+              : 'Only ${widget.product.stock} left',
+          style: TextStyle(
+            color: widget.product.stock > 10
+                ? AppColors.success
+                : AppColors.warning,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuantitySection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Quantity:',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            _buildQuantityButton(Icons.remove,
+                _quantity > 1 ? () => setState(() => _quantity--) : null),
+            Container(
+              width: 50,
+              alignment: Alignment.center,
+              child: Text('$_quantity',
                   style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              _buildQuantityButton(
-                Icons.add,
+                      fontSize: 16, fontWeight: FontWeight.bold)),
+            ),
+            _buildQuantityButton(Icons.add,
                 _quantity < widget.product.stock
                     ? () => setState(() => _quantity++)
-                    : null,
-              ),
-            ],
-          ),
+                    : null),
+          ],
+        ),
+      ],
+    );
+  }
 
-          const SizedBox(height: 28),
-
-          // Action Buttons
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      _cart.add({
-                        'product': widget.product,
-                        'quantity': _quantity,
-                      });
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Added $_quantity item(s) of "${widget.product.name}" to demo cart',
-                        ),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.shopping_cart),
-                  label: const Text('Add to Cart'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+  Widget _buildActionButtons() {
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: () {
+              setState(() {
+                _cart.add({'product': widget.product, 'quantity': _quantity});
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Added $_quantity item(s) of "${widget.product.name}" to cart',
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.favorite_border),
-                iconSize: 26,
-              ),
-            ],
+              );
+            },
+            icon: const Icon(Icons.shopping_cart),
+            label: const Text('Add to Cart'),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 12),
+        IconButton(
+          onPressed: () {},
+          icon: const Icon(Icons.favorite_border),
+          iconSize: 26,
+        ),
+      ],
     );
   }
 
@@ -387,14 +418,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Product Details',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
+              const Text('Product Details',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
               const SizedBox(height: 20),
               if (widget.product.specifications != null)
-                ...widget.product.specifications!.entries.map((entry) {
-                  return Padding(
+                ...widget.product.specifications!.entries.map(
+                  (entry) => Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: Row(
                       children: [
@@ -411,8 +440,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         Flexible(child: Text(entry.value.toString())),
                       ],
                     ),
-                  );
-                }),
+                  ),
+                ),
             ],
           ),
         ),

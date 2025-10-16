@@ -1,49 +1,38 @@
 import 'package:flutter/material.dart';
-import '../core/constants/app_colors.dart';
+import 'package:websiteme/core/constants/app_colors.dart';
+import 'package:websiteme/core/constants/app_constants.dart';
 
 class Footer extends StatelessWidget {
   const Footer({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isDesktop = screenWidth >= 1024;
-    final isTablet = screenWidth >= 600 && screenWidth < 1024;
-
     return Container(
-      width: double.infinity, 
+      width: double.infinity,
       color: AppColors.textPrimary,
-      padding: EdgeInsets.symmetric(
-        horizontal: isDesktop
-            ? 48
-            : (isTablet ? 24 : 0), // 👈 بدون padding على الموبايل
-        vertical: isDesktop ? 48 : 32,
+      padding: Responsive.pagePadding(context),
+      child: ResponsiveLayout(
+        mobile: _buildMobileFooter(context),
+        tablet: _buildTabletFooter(context),
+        desktop: _buildDesktopFooter(context),
       ),
-      child: isDesktop
-          ? _buildDesktopFooter()
-          : isTablet
-          ? _buildTabletFooter()
-          : _buildMobileFooter(),
     );
   }
 
-  // ----------------- Desktop Footer -----------------
-  Widget _buildDesktopFooter() {
+  // ---------------------- Desktop Layout ----------------------
+  Widget _buildDesktopFooter(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Logo & Description
-            Expanded(flex: 2, child: _footerLogoSection()),
-            const SizedBox(width: 24),
-            // Footer Columns
+            Expanded(flex: 2, child: _footerLogoSection(context)),
+            SizedBox(width: Responsive.spacing(context, 32)),
             Expanded(
               flex: 3,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _footerColumn('Shop', [
                     'All Products',
@@ -68,28 +57,18 @@ class Footer extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 40),
+        SizedBox(height: Responsive.spacing(context, 40)),
         const Divider(color: AppColors.textLight),
-        const SizedBox(height: 24),
-        // Bottom Row
-        const Row(
+        SizedBox(height: Responsive.spacing(context, 24)),
+        Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              '© 2025 ShopPro. All rights reserved.',
-              style: TextStyle(color: AppColors.textLight, fontSize: 14),
-            ),
+            _footerText('© 2025 ShopPro. All rights reserved.'),
             Row(
               children: [
-                Text(
-                  'Privacy Policy',
-                  style: TextStyle(color: AppColors.textLight, fontSize: 14),
-                ),
-                SizedBox(width: 24),
-                Text(
-                  'Terms of Service',
-                  style: TextStyle(color: AppColors.textLight, fontSize: 14),
-                ),
+                _footerText('Privacy Policy'),
+                SizedBox(width: Responsive.spacing(context, 24)),
+                _footerText('Terms of Service'),
               ],
             ),
           ],
@@ -98,16 +77,16 @@ class Footer extends StatelessWidget {
     );
   }
 
-  // ----------------- Tablet Footer -----------------
-  Widget _buildTabletFooter() {
+  // ---------------------- Tablet Layout ----------------------
+  Widget _buildTabletFooter(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _footerLogoSection(),
-        const SizedBox(height: 32),
+        _footerLogoSection(context),
+        SizedBox(height: Responsive.spacing(context, 32)),
         Wrap(
-          spacing: 32,
-          runSpacing: 24,
+          spacing: Responsive.spacing(context, 32),
+          runSpacing: Responsive.spacing(context, 24),
           children: [
             _footerColumn('Shop', [
               'All Products',
@@ -129,80 +108,64 @@ class Footer extends StatelessWidget {
             ]),
           ],
         ),
-        const SizedBox(height: 32),
+        SizedBox(height: Responsive.spacing(context, 32)),
         const Divider(color: AppColors.textLight),
-        const SizedBox(height: 16),
-        const Center(
-          child: Text(
-            '© 2025 ShopPro. All rights reserved.',
-            style: TextStyle(color: AppColors.textLight, fontSize: 13),
-          ),
-        ),
+        SizedBox(height: Responsive.spacing(context, 16)),
+        Center(child: _footerText('© 2025 ShopPro. All rights reserved.')),
       ],
     );
   }
 
-  // ----------------- Mobile Footer -----------------
-  // ----------------- Mobile Footer (محسّن) -----------------
-  Widget _buildMobileFooter() {
+  // ---------------------- Mobile Layout ----------------------
+  Widget _buildMobileFooter(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Logo & Description
-        Center(child: _footerLogoSection()),
-        const SizedBox(height: 24),
-
-        // Columns in Wrap (بدل ما تكون عمودية بالكامل)
+        _footerLogoSection(context, isCentered: true),
+        SizedBox(height: Responsive.spacing(context, 24)),
         Wrap(
           alignment: WrapAlignment.center,
-          spacing: 40,
-          runSpacing: 24,
+          spacing: Responsive.spacing(context, 40),
+          runSpacing: Responsive.spacing(context, 24),
           children: [
             _footerColumn('Shop', ['All Products', 'Categories', 'Deals']),
             _footerColumn('Support', ['Help Center', 'Track Order']),
             _footerColumn('Company', ['About Us', 'Contact']),
           ],
         ),
-
-        const SizedBox(height: 32),
+        SizedBox(height: Responsive.spacing(context, 32)),
         const Divider(color: AppColors.textLight),
-
-        // Social Media Row
-        const SizedBox(height: 16),
+        SizedBox(height: Responsive.spacing(context, 16)),
         Wrap(
           alignment: WrapAlignment.center,
-          spacing: 12,
-          children: [
-            _socialIcon(Icons.facebook),
-            _socialIcon(Icons.link),
-            _socialIcon(Icons.email),
-            _socialIcon(Icons.phone),
-          ],
+          spacing: Responsive.spacing(context, 12),
+          children: _socialIcons(),
         ),
-
-        const SizedBox(height: 16),
-        const Text(
+        SizedBox(height: Responsive.spacing(context, 16)),
+        _footerText(
           '© 2025 ShopPro. All rights reserved.',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.textLight, fontSize: 12),
+          isCentered: true,
         ),
       ],
     );
   }
 
-  // ----------------- Shared Widgets -----------------
-  Widget _footerLogoSection() {
+  // ---------------------- Shared Widgets ----------------------
+  Widget _footerLogoSection(BuildContext context, {bool isCentered = false}) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment:
+          isCentered ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: [
-        // Logo
         Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment:
+              isCentered ? MainAxisAlignment.center : MainAxisAlignment.start,
           children: [
             Container(
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
+                gradient: const LinearGradient(
                   colors: [AppColors.primary, AppColors.secondary],
                 ),
                 borderRadius: BorderRadius.circular(8),
@@ -220,20 +183,14 @@ class Footer extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: Responsive.spacing(context, 16)),
         const Text(
           'Your premium shopping destination for quality products at the best prices.',
           style: TextStyle(color: AppColors.textLight, fontSize: 14),
+          textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 20),
-        Row(
-          children: [
-            _socialIcon(Icons.facebook),
-            _socialIcon(Icons.link),
-            _socialIcon(Icons.email),
-            _socialIcon(Icons.phone),
-          ],
-        ),
+        SizedBox(height: Responsive.spacing(context, 20)),
+        if (!isCentered) Row(children: _socialIcons()),
       ],
     );
   }
@@ -270,15 +227,34 @@ class Footer extends StatelessWidget {
     );
   }
 
-  Widget _socialIcon(IconData icon) {
-    return Container(
-      margin: const EdgeInsets.only(right: 10),
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Icon(icon, color: Colors.white, size: 18),
+  List<Widget> _socialIcons() {
+    const icons = [
+      Icons.facebook,
+      Icons.link,
+      Icons.email,
+      Icons.phone,
+    ];
+
+    return icons
+        .map(
+          (icon) => Container(
+            margin: const EdgeInsets.only(right: 10),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: Colors.white, size: 18),
+          ),
+        )
+        .toList();
+  }
+
+  Widget _footerText(String text, {bool isCentered = false}) {
+    return Text(
+      text,
+      textAlign: isCentered ? TextAlign.center : TextAlign.start,
+      style: const TextStyle(color: AppColors.textLight, fontSize: 13),
     );
   }
 }

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:websiteme/core/constants/app_colors.dart';
+import 'package:websiteme/core/constants/app_constants.dart';
 import 'package:websiteme/models/product.dart';
 import '../../widgets/navbar.dart';
-import '../../widgets/footer.dart';
 import '../../widgets/product_card.dart';
-import '../../core/constants/app_colors.dart';
 
 class ProductsScreen extends StatelessWidget {
   const ProductsScreen({super.key});
@@ -12,114 +11,70 @@ class ProductsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final products = demoProducts;
-    final width = MediaQuery.of(context).size.width;
-    final isDesktop = width >= 1100;
-    final isTablet = width >= 600 && width < 1100;
 
     return Scaffold(
-      appBar: const Navbar(),
+      appBar: const PreferredSize(
+        preferredSize: Size.fromHeight(70),
+        child: Navbar(),
+      ),
       body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // ✅ نلف المحتوى كله في Container عشان يتحكم في العرض
-            Container(
-              constraints: const BoxConstraints(maxWidth: 1400),
-              alignment: Alignment.center,
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Sidebar for desktop only
-                    if (isDesktop)
-                      SizedBox(
-                        width: 260.w,
-                        child: _buildFilterSidebar(context),
-                      ),
-
-                    // ✅ Expanded شيلناها واستبدلناها بـ Flexible Container
-                    Expanded(
-                      child: Column(
-                        children: [
-                          _buildHeader(context, products.length),
-                          products.isEmpty
-                              ? _buildEmptyState()
-                              : _buildProductsGrid(
-                                  context,
-                                  products,
-                                  isDesktop,
-                                  isTablet,
-                                ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+        child: Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 1400),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            child: ResponsiveLayout(
+              mobile: _buildMobileLayout(products),
+              tablet: _buildTabletLayout(products),
+              desktop: _buildDesktopLayout(products),
             ),
-            // const Footer(),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  // 🧱 Sidebar (Desktop only)
-  Widget _buildFilterSidebar(BuildContext context) {
+  /// 🟢 Desktop layout (Sidebar + Grid)
+  Widget _buildDesktopLayout(List<Product> products) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(width: 260, child: _buildFilterSidebar()),
+        const SizedBox(width: 20),
+        Expanded(child: _buildProductsSection(products, crossAxisCount: 4)),
+      ],
+    );
+  }
+
+  /// 🟢 Tablet layout
+  Widget _buildTabletLayout(List<Product> products) {
+    return _buildProductsSection(products, crossAxisCount: 3);
+  }
+
+  /// 🟢 Mobile layout
+  Widget _buildMobileLayout(List<Product> products) {
+    return _buildProductsSection(products, crossAxisCount: 2);
+  }
+
+  /// 🧱 Sidebar
+  Widget _buildFilterSidebar() {
     return Container(
+      padding: const EdgeInsets.all(20),
       decoration: const BoxDecoration(
         color: AppColors.background,
         border: Border(right: BorderSide(color: AppColors.border)),
       ),
-      child: ListView(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        padding: EdgeInsets.all(20.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Filters (Demo)',
-            style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 24.h),
-          Text(
-            'Categories',
-            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14.sp),
-          ),
-          SizedBox(height: 12.h),
-          ...['Electronics', 'Wearables', 'Cameras', 'Accessories'].map(
+          const Text('Filters', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 20),
+          ...['Electronics', 'Wearables', 'Cameras'].map(
             (category) => CheckboxListTile(
-              title: Text(category, style: TextStyle(fontSize: 13.sp)),
-              subtitle: Text(
-                'Demo data',
-                style: TextStyle(fontSize: 11.sp, color: AppColors.textLight),
-              ),
+              title: Text(category),
               value: false,
               onChanged: (_) {},
               controlAffinity: ListTileControlAffinity.leading,
               contentPadding: EdgeInsets.zero,
-              dense: true,
-            ),
-          ),
-          Divider(height: 32.h),
-          Text(
-            'Price Range',
-            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14.sp),
-          ),
-          SizedBox(height: 12.h),
-          RangeSlider(
-            values: const RangeValues(0, 500),
-            min: 0,
-            max: 1000,
-            divisions: 20,
-            labels: const RangeLabels('\$0', '\$500'),
-            onChanged: (values) {},
-          ),
-          Divider(height: 32.h),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {},
-              child: const Text('Clear Filters'),
             ),
           ),
         ],
@@ -127,11 +82,34 @@ class ProductsScreen extends StatelessWidget {
     );
   }
 
-  // 🧭 Header
-  Widget _buildHeader(BuildContext context, int count) {
+  /// 🧩 Products Section
+  Widget _buildProductsSection(List<Product> products, {required int crossAxisCount}) {
+    return Column(
+      children: [
+        _buildHeader(products.length),
+        const SizedBox(height: 20),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(10),
+          itemCount: products.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 0.55,
+          ),
+          itemBuilder: (context, index) => ProductCard(product: products[index]),
+        ),
+      ],
+    );
+  }
+
+  /// 🧭 Header
+  Widget _buildHeader(int count) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: AppColors.border)),
@@ -139,83 +117,24 @@ class ProductsScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            '$count Products',
-            style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
-          ),
+          Text('$count Products', style: const TextStyle(fontWeight: FontWeight.bold)),
           Row(
             children: [
-              Text('Sort by: ', style: TextStyle(fontSize: 14.sp)),
-              SizedBox(width: 8.w),
+              const Text('Sort by: '),
+              const SizedBox(width: 8),
               DropdownButton<String>(
                 value: 'featured',
                 underline: const SizedBox(),
                 items: const [
                   DropdownMenuItem(value: 'featured', child: Text('Featured')),
-                  DropdownMenuItem(
-                    value: 'price_low',
-                    child: Text('Price: Low to High'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'price_high',
-                    child: Text('Price: High to Low'),
-                  ),
-                  DropdownMenuItem(value: 'rating', child: Text('Top Rated')),
+                  DropdownMenuItem(value: 'price_low', child: Text('Price: Low to High')),
+                  DropdownMenuItem(value: 'price_high', child: Text('Price: High to Low')),
                 ],
-                onChanged: (value) {},
+                onChanged: null,
               ),
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  // 🧩 Products Grid
-  Widget _buildProductsGrid(
-    BuildContext context,
-    List products,
-    bool isDesktop,
-    bool isTablet,
-  ) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.all(20.w),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: isDesktop ? 4 : (isTablet ? 3 : 2),
-        crossAxisSpacing: 16.w,
-        mainAxisSpacing: 16.h,
-        childAspectRatio: isDesktop ? 0.55 : (isTablet ? 0.5 : 0.4),
-      ),
-      itemCount: products.length,
-      itemBuilder: (context, index) {
-        return ProductCard(product: products[index]);
-      },
-    );
-  }
-
-  // 🪹 Empty State
-  Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(40.w),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.search_off, size: 80.sp, color: AppColors.textLight),
-            SizedBox(height: 16.h),
-            Text(
-              'No products found',
-              style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w600),
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              'Try adjusting your filters',
-              style: TextStyle(color: AppColors.textLight, fontSize: 14.sp),
-            ),
-          ],
-        ),
       ),
     );
   }

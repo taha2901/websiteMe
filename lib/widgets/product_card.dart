@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:websiteme/core/constants/app_constants.dart';
 import '../models/product.dart';
 import '../core/constants/app_colors.dart';
+
 
 class ProductCard extends StatefulWidget {
   final Product product;
@@ -16,20 +17,6 @@ class _ProductCardState extends State<ProductCard> {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final isMobile = width < 600;
-    final isTablet = width >= 600 && width < 1000;
-    final isDesktop = width >= 1000;
-
-    final double imageHeight = isMobile
-        ? 150
-        : isTablet
-        ? 190
-        : 220;
-
-    final double fontSizeTitle = isDesktop ? 16 : (isTablet ? 15 : 14);
-    final double fontSizePrice = isDesktop ? 20 : (isTablet ? 18 : 16);
-
     final card = GestureDetector(
       onTap: () => Navigator.pushNamed(
         context,
@@ -38,7 +25,7 @@ class _ProductCardState extends State<ProductCard> {
       ),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        transform: _isHovered
+        transform: _isHovered && Responsive.isDesktop(context)
             ? (Matrix4.identity()..scale(1.02))
             : Matrix4.identity(),
         child: Card(
@@ -47,55 +34,48 @@ class _ProductCardState extends State<ProductCard> {
             borderRadius: BorderRadius.circular(16),
           ),
           clipBehavior: Clip.antiAlias,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final isHorizontal = constraints.maxWidth > 500 && isDesktop;
-              return isHorizontal
-                  ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildImage(imageHeight, isHorizontal: true),
-                        Expanded(
-                          child: _buildInfo(
-                            fontSizeTitle,
-                            fontSizePrice,
-                            isMobile,
-                          ),
-                        ),
-                      ],
-                    )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildImage(imageHeight),
-                        _buildInfo(fontSizeTitle, fontSizePrice, isMobile),
-                      ],
-                    );
-            },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildImage(),
+              _buildInfo(),
+            ],
           ),
         ),
       ),
     );
 
-    // ✅ Hover شغال بس على الويب
+    // Hover effect (ويب فقط)
     return MouseRegion(
       onEnter: (_) {
-        if (isDesktop) setState(() => _isHovered = true);
+        if (Responsive.isDesktop(context)) {
+          setState(() => _isHovered = true);
+        }
       },
       onExit: (_) {
-        if (isDesktop) setState(() => _isHovered = false);
+        if (Responsive.isDesktop(context)) {
+          setState(() => _isHovered = false);
+        }
       },
       child: card,
     );
   }
 
-  Widget _buildImage(double height, {bool isHorizontal = false}) {
+  Widget _buildImage() {
     return Stack(
       children: [
-        SizedBox(
-          width: isHorizontal ? 220 : double.infinity,
-          height: height,
-          child: Image.network(widget.product.image, fit: BoxFit.cover),
+        AspectRatio(
+          aspectRatio: 1.2,
+          child: Image.network(
+            widget.product.image,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                color: Colors.grey[200],
+                child: const Icon(Icons.image_not_supported, size: 48),
+              );
+            },
+          ),
         ),
         if (widget.product.isOnSale)
           Positioned(
@@ -143,48 +123,51 @@ class _ProductCardState extends State<ProductCard> {
     );
   }
 
-  Widget _buildInfo(double fontSizeTitle, double fontSizePrice, bool isMobile) {
+  Widget _buildInfo() {
     return Padding(
-      padding: EdgeInsets.all(isMobile ? 10.w : 14.w),
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             widget.product.category,
-            style: TextStyle(color: AppColors.textLight, fontSize: 12.sp),
+            style: TextStyle(
+              color: AppColors.textLight,
+              fontSize: Responsive.fontSize(context, 12),
+            ),
           ),
-           SizedBox(height: 2.h),
+          const SizedBox(height: 4),
           Text(
             widget.product.name,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              fontSize: fontSizeTitle,
+              fontSize: Responsive.fontSize(context, 15),
             ),
           ),
-           SizedBox(height: 4.h),
+          const SizedBox(height: 6),
           Row(
             children: [
-               Icon(Icons.star, color: Colors.amber, size: 16.w),
-               SizedBox(width: 4.w),
+              const Icon(Icons.star, color: Colors.amber, size: 16),
+              const SizedBox(width: 4),
               Text(
                 widget.product.rating.toStringAsFixed(1),
-                style:  TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w500,
-                  fontSize: 13.sp,
+                  fontSize: Responsive.fontSize(context, 13),
                 ),
               ),
               Text(
                 ' (${widget.product.reviewsCount})',
-                style:  TextStyle(
+                style: TextStyle(
                   color: AppColors.textLight,
-                  fontSize: 12.sp,
+                  fontSize: Responsive.fontSize(context, 12),
                 ),
               ),
             ],
           ),
-           SizedBox(height: 10.h),
+          const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -193,19 +176,24 @@ class _ProductCardState extends State<ProductCard> {
                 children: [
                   if (widget.product.isOnSale)
                     Text(
-                      '\$${widget.product.price.toStringAsFixed(2)}',
-                      style:  TextStyle(
+                      widget.product.price.toStringAsFixed(2),
+                      style: TextStyle(
                         decoration: TextDecoration.lineThrough,
                         color: AppColors.textLight,
-                        fontSize: 12.sp,
+                        fontSize: Responsive.fontSize(context, 12),
                       ),
                     ),
                   Text(
-                    '\$${widget.product.finalPrice.toStringAsFixed(2)}',
+                    widget.product.finalPrice.toStringAsFixed(2),
                     style: TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.bold,
-                      fontSize: fontSizePrice,
+                      fontSize: Responsive.value(
+                        context: context,
+                        mobile: 16.0,
+                        tablet: 18.0,
+                        desktop: 20.0,
+                      ),
                     ),
                   ),
                 ],

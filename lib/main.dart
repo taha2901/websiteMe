@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:websiteme/models/product.dart';
 import 'screens/home/home_screen.dart';
@@ -26,60 +25,53 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [ChangeNotifierProvider(create: (_) => AuthProvider())],
-      child: ScreenUtilInit(
-        designSize: const Size(1200, 800),
-        minTextAdapt: true,
-        splitScreenMode: true,
-        builder: (context, child) {
-          return MaterialApp(
-            title: 'ShopPro - Premium E-Commerce',
-            debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-              colorSchemeSeed: AppColors.primary,
-              useMaterial3: true,
-              fontFamily: 'Roboto',
-              appBarTheme: const AppBarTheme(
-                centerTitle: false,
-                elevation: 0,
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black87,
+      child: MaterialApp(
+        title: 'ShopPro - Premium E-Commerce',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorSchemeSeed: AppColors.primary,
+          useMaterial3: true,
+          fontFamily: 'Roboto',
+          appBarTheme: const AppBarTheme(
+            centerTitle: false,
+            elevation: 0,
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black87,
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 32,
+                vertical: 16,
               ),
-              elevatedButtonTheme: ElevatedButtonThemeData(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 32.w,
-                    vertical: 16.h,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
               ),
             ),
-            initialRoute: '/',
-            routes: {
-              '/': (context) => const HomeScreen(),
-              '/login': (context) => const LoginScreen(),
-              '/register': (context) => const RegisterScreen(),
-              '/products': (context) => const ProductsScreen(),
-              '/cart': (context) => const CartScreen(),
-              '/checkout': (context) => const CheckoutScreen(),
-              '/profile': (context) => const ProfileScreen(),
-              '/orders': (context) => const OrdersHistoryScreen(),
-              '/dashboard': (context) => const DashboardScreen(),
-            },
-            onGenerateRoute: (settings) {
-              if (settings.name == '/product-detail') {
-                final product = settings.arguments as Product;
-                return MaterialPageRoute(
-                  builder: (context) => ProductDetailScreen(product: product),
-                );
-              }
-              return null;
-            },
-          );
+          ),
+        ),
+        initialRoute: '/',
+        routes: {
+          '/': (context) => const HomeScreen(),
+          '/login': (context) => const LoginScreen(),
+          '/register': (context) => const RegisterScreen(),
+          '/products': (context) => const ProductsScreen(),
+          '/cart': (context) => const CartScreen(),
+          '/checkout': (context) => const CheckoutScreen(),
+          '/profile': (context) => const ProfileScreen(),
+          '/orders': (context) => const OrdersHistoryScreen(),
+          '/dashboard': (context) => const DashboardScreen(),
+        },
+        onGenerateRoute: (settings) {
+          if (settings.name == '/product-detail') {
+            final product = settings.arguments as Product;
+            return MaterialPageRoute(
+              builder: (context) => ProductDetailScreen(product: product),
+            );
+          }
+          return null;
         },
       ),
     );

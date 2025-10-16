@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:websiteme/core/constants/app_constants.dart';
 import '../../../models/product.dart';
 import '../../../widgets/product_card.dart';
 import '../../../core/constants/app_colors.dart';
@@ -10,11 +10,6 @@ class DealsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final products = demoProducts.where((p) => p.isOnSale).toList();
-    final width = MediaQuery.of(context).size.width;
-
-    final bool isMobile = width < 600;
-    final bool isTablet = width >= 600 && width < 1000;
-    final bool isDesktop = width >= 1000;
 
     return Container(
       width: double.infinity,
@@ -28,66 +23,76 @@ class DealsSection extends StatelessWidget {
           ],
         ),
       ),
-      padding: EdgeInsets.symmetric(
-        horizontal: isDesktop ? 80.w : 24.w,
-        vertical: isDesktop ? 60.h : 40.h,
-      ),
+      padding: Responsive.pagePadding(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // 🔥 العنوان
+          // العنوان
           Text(
             '🔥 Hot Deals',
             style: TextStyle(
-              fontSize: isDesktop ? 32.sp : (isTablet ? 26.sp : 22.sp),
+              fontSize: Responsive.value(
+                context: context,
+                mobile: 24.0,
+                tablet: 28.0,
+                desktop: 36.0,
+              ),
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
             ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: 8.h),
+          const SizedBox(height: 8),
           Text(
             "Limited time offers — Don't miss out!",
             style: TextStyle(
-              fontSize: isDesktop ? 16.sp : 14.sp,
+              fontSize: Responsive.fontSize(context, 16),
               color: AppColors.textLight,
             ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: 40.h),
+          SizedBox(height: Responsive.spacing(context, 40)),
 
-          // 🛍️ قائمة المنتجات (أفقية في الموبايل — شبكية في الديسكتوب)
-          if (isMobile)
-            SizedBox(
-              height: 340.h,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: products.length,
-                separatorBuilder: (_, __) => SizedBox(width: 12.w),
-                itemBuilder: (context, index) {
-                  return SizedBox(
-                    width: 240.w,
-                    child: ProductCard(product: products[index]),
-                  );
-                },
-              ),
-            )
-          else
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: products.length,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: isDesktop ? 4 : 3,
-                crossAxisSpacing: 20.w,
-                mainAxisSpacing: 20.h,
-                childAspectRatio: 0.72,
-              ),
-              itemBuilder: (context, index) =>
-                  ProductCard(product: products[index]),
-            ),
+          // Products
+          ResponsiveLayout(
+            mobile: _buildMobileList(products),
+            tablet: _buildGrid(products, 3),
+            desktop: _buildGrid(products, 4),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMobileList(List<Product> products) {
+    return SizedBox(
+      height: 340,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: products.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 16),
+        itemBuilder: (context, index) {
+          return SizedBox(
+            width: 240,
+            child: ProductCard(product: products[index]),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildGrid(List<Product> products, int columns) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: products.length,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columns,
+        crossAxisSpacing: 20,
+        mainAxisSpacing: 20,
+        childAspectRatio: 0.72,
+      ),
+      itemBuilder: (context, index) => ProductCard(product: products[index]),
     );
   }
 }

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:websiteme/models/cart_item.dart';
+import 'package:websiteme/core/constants/app_constants.dart';
+import '../../core/constants/app_colors.dart';
+import '../../models/cart_item.dart';
 import '../../widgets/navbar.dart';
 import '../../widgets/footer.dart';
-import '../../core/constants/app_colors.dart';
-import '../../models/product.dart'; // فيها demoCart
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -26,105 +26,105 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: const Navbar(),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 1000),
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Checkout',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: Theme.of(context)
-                            .colorScheme
-                            .copyWith(primary: AppColors.primary),
-                      ),
-                      child: Stepper(
-                        elevation: 0,
-                        type: StepperType.vertical,
-                        currentStep: _currentStep,
-                        onStepContinue: _nextStep,
-                        onStepCancel: _previousStep,
-                        controlsBuilder: (context, details) {
-                          return Row(
-                            children: [
-                              ElevatedButton(
-                                onPressed: details.onStepContinue,
-                                child: Text(_currentStep == 2 ? 'Place Order' : 'Next'),
-                              ),
-                              const SizedBox(width: 16),
-                              if (_currentStep > 0)
-                                TextButton(
-                                  onPressed: details.onStepCancel,
-                                  child: const Text('Back'),
-                                ),
-                            ],
-                          );
-                        },
-                        steps: [
-                          Step(
-                            title: const Text('Shipping Address'),
-                            isActive: _currentStep >= 0,
-                            state: _currentStep > 0
-                                ? StepState.complete
-                                : StepState.indexed,
-                            content: _buildShippingForm(),
-                          ),
-                          Step(
-                            title: const Text('Payment Method'),
-                            isActive: _currentStep >= 1,
-                            state: _currentStep > 1
-                                ? StepState.complete
-                                : StepState.indexed,
-                            content: _buildPaymentForm(),
-                          ),
-                          Step(
-                            title: const Text('Review Order'),
-                            isActive: _currentStep >= 2,
-                            state: StepState.indexed,
-                            content: _buildOrderReview(),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+      body: ResponsiveLayout(
+        mobile: _buildContent(context, padding: const EdgeInsets.all(16)),
+        tablet: _buildContent(context, padding: const EdgeInsets.all(24)),
+        desktop: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1000),
+            child: _buildContent(context, padding: const EdgeInsets.all(32)),
           ),
-          // const Footer(),
-        ],
+        ),
       ),
     );
   }
 
-  void _nextStep() {
-    if (_currentStep == 0 && !_formKey.currentState!.validate()) return;
+  Widget _buildContent(BuildContext context, {required EdgeInsets padding}) {
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: padding,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Checkout',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                ),
+                const SizedBox(height: 32),
 
-    if (_currentStep < 2) {
-      setState(() => _currentStep++);
-    } else {
-      _placeOrder(context);
-    }
+                // 🧭 Stepper Process
+                Theme(
+                  data: Theme.of(context).copyWith(
+                    colorScheme: Theme.of(context)
+                        .colorScheme
+                        .copyWith(primary: AppColors.primary),
+                  ),
+                  child: Stepper(
+                    elevation: 0,
+                    type: StepperType.vertical,
+                    currentStep: _currentStep,
+                    onStepContinue: _nextStep,
+                    onStepCancel: _previousStep,
+                    controlsBuilder: (context, details) =>
+                        _buildStepperButtons(details),
+                    steps: [
+                      Step(
+                        title: const Text('Shipping Address'),
+                        isActive: _currentStep >= 0,
+                        state: _currentStep > 0
+                            ? StepState.complete
+                            : StepState.indexed,
+                        content: _buildShippingForm(),
+                      ),
+                      Step(
+                        title: const Text('Payment Method'),
+                        isActive: _currentStep >= 1,
+                        state: _currentStep > 1
+                            ? StepState.complete
+                            : StepState.indexed,
+                        content: _buildPaymentForm(),
+                      ),
+                      Step(
+                        title: const Text('Review Order'),
+                        isActive: _currentStep >= 2,
+                        content: _buildOrderReview(),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const Footer(),
+      ],
+    );
   }
 
-  void _previousStep() {
-    if (_currentStep > 0) {
-      setState(() => _currentStep--);
-    }
+  // 🔘 أزرار التحكم في الخطوات
+  Widget _buildStepperButtons(ControlsDetails details) {
+    return Row(
+      children: [
+        ElevatedButton(
+          onPressed: details.onStepContinue,
+          child: Text(_currentStep == 2 ? 'Place Order' : 'Next'),
+        ),
+        const SizedBox(width: 16),
+        if (_currentStep > 0)
+          TextButton(
+            onPressed: details.onStepCancel,
+            child: const Text('Back'),
+          ),
+      ],
+    );
   }
 
+  // 📦 نموذج العنوان
   Widget _buildShippingForm() {
     return Form(
       key: _formKey,
@@ -148,6 +148,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  // 🧱 حقل إدخال نص
   Widget _buildField(String label, {TextInputType keyboard = TextInputType.text}) {
     return TextFormField(
       decoration: InputDecoration(
@@ -161,11 +162,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  // 💳 اختيار وسيلة الدفع
   Widget _buildPaymentForm() {
     return Card(
-      elevation: 1,
       color: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 1,
       child: Column(
         children: [
           RadioListTile(
@@ -193,6 +195,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  // 🧾 مراجعة الطلب قبل الإرسال
   Widget _buildOrderReview() {
     return Card(
       color: Colors.white,
@@ -241,26 +244,44 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  // 💰 صف في ملخص السعر
   Widget _summaryRow(String label, String value,
       {bool isTotal = false, Color? valueColor}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label,
-            style: TextStyle(
-              fontSize: isTotal ? 18 : 16,
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-            )),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: isTotal ? 18 : 16,
+            fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
         Text(
           value,
           style: TextStyle(
             fontSize: isTotal ? 20 : 16,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.w600,
-            color: valueColor ?? (isTotal ? AppColors.primary : AppColors.textPrimary),
+            color: valueColor ??
+                (isTotal ? AppColors.primary : AppColors.textPrimary),
           ),
         ),
       ],
     );
+  }
+
+  // ✅ تنفيذ الطلب
+  void _nextStep() {
+    if (_currentStep == 0 && !_formKey.currentState!.validate()) return;
+    if (_currentStep < 2) {
+      setState(() => _currentStep++);
+    } else {
+      _placeOrder(context);
+    }
+  }
+
+  void _previousStep() {
+    if (_currentStep > 0) setState(() => _currentStep--);
   }
 
   void _placeOrder(BuildContext context) {
@@ -274,8 +295,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () =>
-                Navigator.of(context).pushNamedAndRemoveUntil('/', (r) => false),
+            onPressed: () {
+              Navigator.of(context).pushNamedAndRemoveUntil('/', (r) => false);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Order placed successfully!')),
+              );
+            },
             child: const Text('OK'),
           ),
         ],

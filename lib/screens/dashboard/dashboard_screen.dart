@@ -42,7 +42,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ),
-          const Footer(),
+          // const Footer(),
         ],
       ),
     );

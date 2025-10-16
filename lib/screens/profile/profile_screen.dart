@@ -128,7 +128,7 @@ class ProfileScreen extends StatelessWidget {
                         'Get help with your orders',
                         () {},
                       ),
-                      if (user.isAdmin)
+                      // if (user.isAdmin)
                         _buildMenuItem(
                           context,
                           Icons.dashboard_outlined,
