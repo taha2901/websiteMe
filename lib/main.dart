@@ -13,8 +13,14 @@ import 'screens/profile/orders_history_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 import 'providers/auth_provider.dart';
 import 'core/constants/app_colors.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart'; 
 
-void main() {
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
@@ -77,3 +83,30 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+
+// npm install firebase
+// 1:916458160199:web:397806d50e63a4f6fcf162
+/*
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyD7IW8xBKXZhmz8vKlwtku87dQsTktOaGg",
+  authDomain: "websiteone-dde44.firebaseapp.com",
+  projectId: "websiteone-dde44",
+  storageBucket: "websiteone-dde44.firebasestorage.app",
+  messagingSenderId: "916458160199",
+  appId: "1:916458160199:web:397806d50e63a4f6fcf162",
+  measurementId: "G-V1L74KZ60D"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+*/

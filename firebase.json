@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "websiteone-dde44",
     "public": "build/web",
     "ignore": [
       "firebase.json",
@@ -12,5 +13,17 @@
         "destination": "/index.html"
       }
     ]
+  },
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "websiteone-dde44",
+          "configurations": {
+            "web": "1:916458160199:web:397806d50e63a4f6fcf162"
+          }
+        }
+      }
+    }
   }
 }
