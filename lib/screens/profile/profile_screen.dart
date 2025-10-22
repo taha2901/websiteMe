@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:websiteme/logic/cubits/auth/auth_cubit.dart';
+import 'package:websiteme/logic/cubits/auth/auth_state.dart';
 import '../../widgets/navbar.dart';
-import '../../widgets/footer.dart';
-import '../../providers/auth_provider.dart';
 import '../../core/constants/app_colors.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -10,21 +10,18 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = context.watch<AuthProvider>();
-    final user = authProvider.currentUser;
+    final state = context.watch<AuthCubit>().state;
 
-    if (user == null) {
-      // 🔒 حالة المستخدم غير مسجل الدخول
+    // 🔒 حالة المستخدم غير مسجل الدخول
+    if (state is! AuthAuthenticated) {
       return const Scaffold(
-        body: Center(
-          child: Text('Please log in to view your profile.'),
-        ),
+        body: Center(child: Text('Please log in to view your profile.')),
       );
     }
 
+    final user = state.user;
     final width = MediaQuery.of(context).size.width;
     final bool isDesktop = width >= 1000;
-    final bool isTablet = width >= 700 && width < 1000;
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -57,14 +54,18 @@ class ProfileScreen extends StatelessWidget {
                               final isHorizontal = constraints.maxWidth > 500;
                               return isHorizontal
                                   ? Row(
-                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
                                       children: [
-                                        _buildAvatar(user.name),
+                                        _buildAvatar(user.email ?? 'U'),
                                         const SizedBox(width: 24),
                                         Expanded(child: _buildUserInfo(user)),
                                         ElevatedButton.icon(
                                           onPressed: () {
-                                            Navigator.pushNamed(context, '/edit-profile');
+                                            Navigator.pushNamed(
+                                              context,
+                                              '/edit-profile',
+                                            );
                                           },
                                           icon: const Icon(Icons.edit),
                                           label: const Text('Edit Profile'),
@@ -73,13 +74,16 @@ class ProfileScreen extends StatelessWidget {
                                     )
                                   : Column(
                                       children: [
-                                        _buildAvatar(user.name),
+                                        _buildAvatar(user.email ?? 'U'),
                                         const SizedBox(height: 16),
                                         _buildUserInfo(user),
                                         const SizedBox(height: 16),
                                         ElevatedButton.icon(
                                           onPressed: () {
-                                            Navigator.pushNamed(context, '/edit-profile');
+                                            Navigator.pushNamed(
+                                              context,
+                                              '/edit-profile',
+                                            );
                                           },
                                           icon: const Icon(Icons.edit),
                                           label: const Text('Edit Profile'),
@@ -128,15 +132,14 @@ class ProfileScreen extends StatelessWidget {
                         'Get help with your orders',
                         () {},
                       ),
-                      // if (user.isAdmin)
-                        _buildMenuItem(
-                          context,
-                          Icons.dashboard_outlined,
-                          'Admin Dashboard',
-                          'Manage your store',
-                          () => Navigator.pushNamed(context, '/dashboard'),
-                          isHighlighted: true,
-                        ),
+                      _buildMenuItem(
+                        context,
+                        Icons.dashboard_outlined,
+                        'Admin Dashboard',
+                        'Manage your store',
+                        () => Navigator.pushNamed(context, '/dashboard'),
+                        isHighlighted: true,
+                      ),
 
                       const SizedBox(height: 32),
 
@@ -145,7 +148,7 @@ class ProfileScreen extends StatelessWidget {
                         width: double.infinity,
                         child: OutlinedButton.icon(
                           onPressed: () {
-                            authProvider.logout();
+                            context.read<AuthCubit>().logout();
                             Navigator.pushNamedAndRemoveUntil(
                               context,
                               '/',
@@ -177,12 +180,12 @@ class ProfileScreen extends StatelessWidget {
 
   // 🧩 مكونات الواجهة
 
-  Widget _buildAvatar(String name) {
+  Widget _buildAvatar(String text) {
     return CircleAvatar(
       radius: 50,
       backgroundColor: AppColors.primary.withOpacity(0.15),
       child: Text(
-        name[0].toUpperCase(),
+        text[0].toUpperCase(),
         style: const TextStyle(
           fontSize: 36,
           fontWeight: FontWeight.bold,
@@ -197,7 +200,7 @@ class ProfileScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          user.name,
+          user.displayName ?? 'User',
           style: const TextStyle(
             fontSize: 26,
             fontWeight: FontWeight.bold,
@@ -206,16 +209,13 @@ class ProfileScreen extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          user.email,
-          style: const TextStyle(
-            fontSize: 16,
-            color: AppColors.textSecondary,
-          ),
+          user.email ?? '',
+          style: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
         ),
-        if (user.phone != null) ...[
+        if (user.phoneNumber != null) ...[
           const SizedBox(height: 4),
           Text(
-            user.phone!,
+            user.phoneNumber!,
             style: const TextStyle(
               fontSize: 16,
               color: AppColors.textSecondary,
@@ -237,9 +237,7 @@ class ProfileScreen extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       color: isHighlighted ? AppColors.primary.withOpacity(0.05) : Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 1,
       child: ListTile(
         leading: Container(

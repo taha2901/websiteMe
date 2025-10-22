@@ -7,13 +7,15 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:websiteme/core/services/auth_service.dart';
+import 'package:websiteme/logic/cubits/auth/auth_cubit.dart';
 
 import 'package:websiteme/main.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget( MyApp(authCubit:  AuthCubit(AuthServicesImpl(),)));
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);

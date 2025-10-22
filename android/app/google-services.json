@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "916458160199",
+    "project_id": "websiteone-dde44",
+    "storage_bucket": "websiteone-dde44.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:916458160199:android:bd8b8ea1ed9c77a2fcf162",
+        "android_client_info": {
+          "package_name": "com.example.ecommerceMe"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCc8ouOHg6tCLOZ_NUdx0-tA3lSO7m12KY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

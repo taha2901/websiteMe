@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:websiteme/core/constants/app_constants.dart';
+import 'package:websiteme/core/constants/app_colors.dart';
+import 'package:websiteme/logic/cubits/cart/cart_cubit.dart';
+import 'package:websiteme/logic/cubits/cart/cart_states.dart';
+import 'package:websiteme/logic/cubits/favourite/fav_cubit.dart';
+import 'package:websiteme/logic/cubits/favourite/fav_states.dart';
+import 'package:websiteme/logic/cubits/auth/auth_cubit.dart';
+import 'package:websiteme/logic/cubits/auth/auth_state.dart';
 import '../models/product.dart';
-import '../core/constants/app_colors.dart';
-
 
 class ProductCard extends StatefulWidget {
   final Product product;
@@ -17,6 +23,9 @@ class _ProductCardState extends State<ProductCard> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = context.watch<AuthCubit>().state;
+    final user = authState is AuthAuthenticated ? authState.user : null;
+
     final card = GestureDetector(
       onTap: () => Navigator.pushNamed(
         context,
@@ -36,10 +45,7 @@ class _ProductCardState extends State<ProductCard> {
           clipBehavior: Clip.antiAlias,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildImage(),
-              _buildInfo(),
-            ],
+            children: [_buildImage(context, user), _buildInfo(context)],
           ),
         ),
       ),
@@ -48,20 +54,16 @@ class _ProductCardState extends State<ProductCard> {
     // Hover effect (ويب فقط)
     return MouseRegion(
       onEnter: (_) {
-        if (Responsive.isDesktop(context)) {
-          setState(() => _isHovered = true);
-        }
+        if (Responsive.isDesktop(context)) setState(() => _isHovered = true);
       },
       onExit: (_) {
-        if (Responsive.isDesktop(context)) {
-          setState(() => _isHovered = false);
-        }
+        if (Responsive.isDesktop(context)) setState(() => _isHovered = false);
       },
       child: card,
     );
   }
 
-  Widget _buildImage() {
+  Widget _buildImage(BuildContext context, dynamic user) {
     return Stack(
       children: [
         AspectRatio(
@@ -69,14 +71,14 @@ class _ProductCardState extends State<ProductCard> {
           child: Image.network(
             widget.product.image,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                color: Colors.grey[200],
-                child: const Icon(Icons.image_not_supported, size: 48),
-              );
-            },
+            errorBuilder: (_, __, ___) => Container(
+              color: Colors.grey[200],
+              child: const Icon(Icons.image_not_supported, size: 48),
+            ),
           ),
         ),
+
+        // عرض الخصم
         if (widget.product.isOnSale)
           Positioned(
             top: 12,
@@ -97,6 +99,8 @@ class _ProductCardState extends State<ProductCard> {
               ),
             ),
           ),
+
+        // زر المفضلة ❤️
         Positioned(
           top: 10,
           right: 10,
@@ -104,16 +108,29 @@ class _ProductCardState extends State<ProductCard> {
             color: Colors.white,
             shape: const CircleBorder(),
             elevation: 2,
-            child: IconButton(
-              icon: const Icon(Icons.favorite_border),
-              iconSize: 20,
-              color: AppColors.error,
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Added to wishlist!'),
-                    duration: Duration(seconds: 1),
+            child: BlocBuilder<FavouriteCubit, FavouriteState>(
+              builder: (context, state) {
+                final favCubit = context.read<FavouriteCubit>();
+                final isFav = favCubit.isFavourite(widget.product.id);
+
+                return IconButton(
+                  icon: Icon(
+                    isFav ? Icons.favorite : Icons.favorite_border,
+                    color: isFav ? AppColors.error : Colors.grey,
                   ),
+                  iconSize: 20,
+                  onPressed: () {
+                    if (user == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please log in to add favourites.'),
+                          duration: Duration(seconds: 1),
+                        ),
+                      );
+                      return;
+                    }
+                    favCubit.toggleFavourite(widget.product);
+                  },
                 );
               },
             ),
@@ -123,7 +140,7 @@ class _ProductCardState extends State<ProductCard> {
     );
   }
 
-  Widget _buildInfo() {
+  Widget _buildInfo(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(14),
       child: Column(
@@ -198,20 +215,70 @@ class _ProductCardState extends State<ProductCard> {
                   ),
                 ],
               ),
-              IconButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${widget.product.name} added to cart!'),
-                      duration: const Duration(seconds: 1),
+
+              // زر السلة 🛒
+              BlocBuilder<CartCubit, CartState>(
+                builder: (context, cartState) {
+                  bool isInCart = false;
+                  if (cartState is CartLoaded) {
+                    isInCart = cartState.items.any(
+                      (i) => i.productId == widget.product.id,
+                    );
+                  }
+
+                  return IconButton(
+                    onPressed: () {
+                      final authState = context.read<AuthCubit>().state;
+                      final user = authState is AuthAuthenticated
+                          ? authState.user
+                          : null;
+                      if (user == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please log in to add to cart.'),
+                          ),
+                        );
+                        return;
+                      }
+
+                      final cartCubit = context.read<CartCubit>();
+
+                      if (isInCart) {
+                        // نحذف
+                        cartCubit.removeFromCart(widget.product.id);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              '${widget.product.name} removed from cart',
+                            ),
+                          ),
+                        );
+                      } else {
+                        // نضيف
+                        cartCubit.addToCartFromProduct(widget.product);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              '${widget.product.name} added to cart!',
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    icon: Icon(
+                      isInCart
+                          ? Icons.remove_shopping_cart
+                          : Icons.add_shopping_cart,
+                    ),
+                    color: Colors.white,
+                    style: IconButton.styleFrom(
+                      backgroundColor: isInCart
+                          ? Colors.grey
+                          : AppColors.primary,
+                      foregroundColor: Colors.white,
                     ),
                   );
                 },
-                icon: const Icon(Icons.add_shopping_cart),
-                style: IconButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                ),
               ),
             ],
           ),

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:websiteme/core/constants/app_constants.dart';
+import 'package:websiteme/core/constants/app_colors.dart';
+import 'package:websiteme/logic/cubits/cart/cart_cubit.dart';
+import 'package:websiteme/logic/cubits/cart/cart_states.dart';
+import 'package:websiteme/models/cart_item.dart';
 import '../../widgets/navbar.dart';
-import '../../core/constants/app_colors.dart';
-import '../../models/cart_item.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -12,52 +15,49 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  final List<CartItem> _items = List.from(demoCart);
-
-  double get subtotal => _items.fold(0, (sum, item) => sum + item.totalPrice);
-  double get shipping => subtotal > 100 ? 0 : 9.99;
-  double get total => subtotal + shipping;
-
-  void _updateQuantity(String productId, int newQty) {
-    setState(() {
-      final item = _items.firstWhere((e) => e.product.id == productId);
-      if (newQty <= 0) {
-        _items.remove(item);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${item.product.name} removed from cart')),
-        );
-      } else {
-        item.quantity = newQty;
-      }
-    });
+  @override
+  void initState() {
+    super.initState();
+    context.read<CartCubit>().loadCart();
   }
 
-  void _removeItem(String productId) {
-    setState(() {
-      final item = _items.firstWhere((e) => e.product.id == productId);
-      _items.remove(item);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${item.product.name} removed from cart')),
-      );
-    });
-  }
+  double _calcSubtotal(List<CartItemModel> items) =>
+      items.fold(0, (sum, i) => sum + i.total);
+  double _calcShipping(double subtotal) => subtotal > 100 ? 0 : 9.99;
+  double _calcTotal(double subtotal, double shipping) => subtotal + shipping;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: const Navbar(),
-      body: ResponsiveLayout(
-        mobile: _buildMobileLayout(),
-        tablet: _buildTabletLayout(),
-        desktop: _buildDesktopLayout(),
+      body: BlocBuilder<CartCubit, CartState>(
+        builder: (context, state) {
+          if (state is CartLoading) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (state is CartError) {
+            return Center(child: Text('Error: ${state.message}'));
+          } else if (state is CartLoaded) {
+            final items = state.items;
+            final subtotal = _calcSubtotal(items);
+            final shipping = _calcShipping(subtotal);
+            final total = _calcTotal(subtotal, shipping);
+
+            return ResponsiveLayout(
+              mobile: _buildMobileLayout(items, subtotal, shipping, total),
+              tablet: _buildTabletLayout(items, subtotal, shipping, total),
+              desktop: _buildDesktopLayout(items, subtotal, shipping, total),
+            );
+          }
+          return const Center(child: Text('Your cart is empty.'));
+        },
       ),
     );
   }
 
-  // 🟢 Desktop Layout (2 columns)
-  Widget _buildDesktopLayout() {
-    return _items.isEmpty
+  Widget _buildDesktopLayout(
+      List<CartItemModel> items, double subtotal, double shipping, double total) {
+    return items.isEmpty
         ? _buildEmptyCart()
         : SingleChildScrollView(
             child: Center(
@@ -67,9 +67,10 @@ class _CartScreenState extends State<CartScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(flex: 2, child: _buildCartItems()),
+                    Expanded(flex: 2, child: _buildCartItems(items)),
                     const SizedBox(width: 24),
-                    Expanded(flex: 1, child: _buildOrderSummary()),
+                    Expanded(
+                        flex: 1, child: _buildOrderSummary(subtotal, shipping, total)),
                   ],
                 ),
               ),
@@ -77,9 +78,9 @@ class _CartScreenState extends State<CartScreen> {
           );
   }
 
-  // 🟢 Tablet Layout (stacked but wide)
-  Widget _buildTabletLayout() {
-    return _items.isEmpty
+  Widget _buildTabletLayout(
+      List<CartItemModel> items, double subtotal, double shipping, double total) {
+    return items.isEmpty
         ? _buildEmptyCart()
         : SingleChildScrollView(
             child: Center(
@@ -88,9 +89,9 @@ class _CartScreenState extends State<CartScreen> {
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    _buildCartItems(),
+                    _buildCartItems(items),
                     const SizedBox(height: 24),
-                    _buildOrderSummary(),
+                    _buildOrderSummary(subtotal, shipping, total),
                   ],
                 ),
               ),
@@ -98,23 +99,22 @@ class _CartScreenState extends State<CartScreen> {
           );
   }
 
-  // 🟢 Mobile Layout (vertical, compact)
-  Widget _buildMobileLayout() {
-    return _items.isEmpty
+  Widget _buildMobileLayout(
+      List<CartItemModel> items, double subtotal, double shipping, double total) {
+    return items.isEmpty
         ? _buildEmptyCart()
         : SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                _buildCartItems(isCompact: true),
+                _buildCartItems(items, isCompact: true),
                 const SizedBox(height: 24),
-                _buildOrderSummary(),
+                _buildOrderSummary(subtotal, shipping, total),
               ],
             ),
           );
   }
 
-  // 🛒 Empty Cart
   Widget _buildEmptyCart() {
     return Center(
       child: Padding(
@@ -144,19 +144,17 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  // 🧾 Cart Items
-  Widget _buildCartItems({bool isCompact = false}) {
+  Widget _buildCartItems(List<CartItemModel> items, {bool isCompact = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Shopping Cart',
             style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        Text('${_items.length} items',
+        Text('${items.length} items',
             style: const TextStyle(fontSize: 16, color: AppColors.textLight)),
         const SizedBox(height: 24),
-
-        ..._items.map((item) {
+        ...items.map((item) {
           return Card(
             margin: const EdgeInsets.only(bottom: 16),
             elevation: 2,
@@ -171,7 +169,7 @@ class _CartScreenState extends State<CartScreen> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
-                          item.product.image,
+                          item.image,
                           width: isCompact ? 70 : 90,
                           height: isCompact ? 70 : 90,
                           fit: BoxFit.cover,
@@ -182,16 +180,16 @@ class _CartScreenState extends State<CartScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(item.product.name,
+                            Text(item.name,
                                 style: const TextStyle(
                                     fontSize: 16, fontWeight: FontWeight.w600)),
                             const SizedBox(height: 4),
-                            Text(item.product.category,
+                            Text('Qty: ${item.quantity}',
                                 style: const TextStyle(
                                     color: AppColors.textLight, fontSize: 14)),
                             const SizedBox(height: 8),
                             Text(
-                              '\$${item.product.finalPrice.toStringAsFixed(2)}',
+                              '\$${item.price.toStringAsFixed(2)}',
                               style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -200,41 +198,58 @@ class _CartScreenState extends State<CartScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(width: 8),
                       IconButton(
-                        onPressed: () => _removeItem(item.product.id),
+                        onPressed: () => context
+                            .read<CartCubit>()
+                            .removeFromCart(item.id),
                         icon: const Icon(Icons.delete_outline),
                         color: AppColors.error,
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
-
-                  // Quantity + Total
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
                         children: [
                           IconButton(
-                            onPressed: () =>
-                                _updateQuantity(item.product.id, item.quantity - 1),
+                            onPressed: () {
+                              if (item.quantity > 1) {
+                                final updatedItem = CartItemModel(
+                                  id: item.id,
+                                  productId: item.productId,
+                                  name: item.name,
+                                  image: item.image,
+                                  price: item.price,
+                                  quantity: item.quantity - 1,
+                                );
+                                context.read<CartCubit>().addToCart(updatedItem);
+                              }
+                            },
                             icon: const Icon(Icons.remove_circle_outline),
                           ),
-                          Text(
-                            '${item.quantity}',
-                            style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
+                          Text('${item.quantity}',
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold)),
                           IconButton(
-                            onPressed: () =>
-                                _updateQuantity(item.product.id, item.quantity + 1),
+                            onPressed: () {
+                              final updatedItem = CartItemModel(
+                                id: item.id,
+                                productId: item.productId,
+                                name: item.name,
+                                image: item.image,
+                                price: item.price,
+                                quantity: item.quantity + 1,
+                              );
+                              context.read<CartCubit>().addToCart(updatedItem);
+                            },
                             icon: const Icon(Icons.add_circle_outline),
                           ),
                         ],
                       ),
                       Text(
-                        '\$${item.totalPrice.toStringAsFixed(2)}',
+                        '\$${item.total.toStringAsFixed(2)}',
                         style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -251,8 +266,7 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  // 📦 Order Summary
-  Widget _buildOrderSummary() {
+  Widget _buildOrderSummary(double subtotal, double shipping, double total) {
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

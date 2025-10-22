@@ -1,46 +1,43 @@
+import 'package:websiteme/core/helper/api_paths.dart';
+import 'package:websiteme/core/helper/firestore_services.dart';
+import 'package:websiteme/models/cart_item.dart';
 
-// import 'package:flutter/widgets.dart';
+abstract class CartServices {
+  Future<List<CartItemModel>> getCartItems(String userId);
+  Future<void> setCartItem(String userId, CartItemModel item);
+  Future<void> removeCartItem(String userId, String itemId);
+  Future<void> clearCart(String userId);
+}
 
-// abstract class CartServices {
-//   Future<List<AddToCartModel>> fetchCartItems(String userId);
-//   Future<void> setCartItem(String userId, AddToCartModel cartItem);
-// }
+class CartServicesImpl implements CartServices {
+  final _firestore = FirestoreServices.instance;
 
-// class CartServicesImp implements CartServices {
-//   final fireStoreServices = FirestoreServices.instance;
-//   @override
-//   Future<List<AddToCartModel>> fetchCartItems(String userId) async {
-//     return await fireStoreServices.getCollection(
-//       path: ApiPaths.cartItems(userId),
-//       builder: (data, documentId) => AddToCartModel.fromMap(data),
-//     );
-//   }
+  @override
+  Future<List<CartItemModel>> getCartItems(String userId) async {
+    return await _firestore.getCollection(
+      path: ApiPaths.cartItems(userId),
+      builder: (data, documentId) => CartItemModel.fromMap(data, documentId),
+    );
+  }
 
-//   @override
-//   Future<void> setCartItem(String userId, AddToCartModel cartItem) async {
-//     await fireStoreServices.setData(
-//         path: ApiPaths.cartItem(userId, cartItem.id), data: cartItem.toMap());
-//   }
+  @override
+  Future<void> setCartItem(String userId, CartItemModel item) async {
+    await _firestore.setData(
+      path: ApiPaths.cartItem(userId, item.id),
+      data: item.toMap(),
+    );
+  }
 
-//   Future<void> removeFromCart(String userId, String cartItemId) async {
-//     await fireStoreServices.deleteData(
-//       path: ApiPaths.cartItem(userId, cartItemId),
-//     );
-//   }
+  @override
+  Future<void> removeCartItem(String userId, String itemId) async {
+    await _firestore.deleteData(path: ApiPaths.cartItem(userId, itemId));
+  }
 
-//   // مسح الكارت بالكامل
-//   Future<void> clearCart(String userId) async {
-//     try {
-//       // جلب جميع العناصر أولاً
-//       final cartItems = await fetchCartItems(userId);
-
-//       // حذف كل عنصر
-//       for (final item in cartItems) {
-//         await removeFromCart(userId, item.id);
-//       }
-//     } catch (e) {
-//       debugPrint("Error clearing cart: $e");
-//       rethrow;
-//     }
-//   }
-// }
+  @override
+  Future<void> clearCart(String userId) async {
+    final items = await getCartItems(userId);
+    for (final i in items) {
+      await removeCartItem(userId, i.id);
+    }
+  }
+}

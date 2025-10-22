@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/product.dart';
 import '../../widgets/navbar.dart';
-import '../../widgets/footer.dart';
 import '../../core/constants/app_colors.dart';
 
 /// ✅ Widget عامة لتحديد تخطيط الشاشة حسب الحجم

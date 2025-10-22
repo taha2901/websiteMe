@@ -1,27 +1,38 @@
+import 'package:websiteme/core/helper/api_paths.dart';
+import 'package:websiteme/core/helper/firestore_services.dart';
+import 'package:websiteme/models/product.dart';
 
-// abstract class ProductDetailsServices {
-//   Future<ProductItemModel> fetchProductDetails(String productId);
+abstract class ProductServices {
+  Future<List<Product>> fetchAllProducts();
+  Future<List<Product>> fetchProductsByCategory(String categoryName);
+  Future<Product> fetchProductDetails(String productId);
+}
 
-//   Future<void> addToCart(AddToCartModel cartItem, String userId);
-// }
+class ProductServicesImpl implements ProductServices {
+  final firestore = FirestoreServices.instance;
 
-// class ProductDetailsServicesImpl implements ProductDetailsServices {
-//   final firestoreServices = FirestoreServices.instance;
-//   @override
-//   Future<ProductItemModel> fetchProductDetails(String productId) async {
-//     final selectedProduct =
-//         await firestoreServices.getDocument<ProductItemModel>(
-//       path: ApiPaths.product(productId),
-//       builder: (data, documentId) => ProductItemModel.fromMap(data, documentId),
-//     );
-//     return selectedProduct;
-//   }
+  @override
+  Future<List<Product>> fetchAllProducts() async {
+    return firestore.getCollection<Product>(
+      path: ApiPaths.products(),
+      builder: (data, documentId) => Product.fromMap(data, documentId),
+    );
+  }
 
-//   @override
-//   Future<void> addToCart(AddToCartModel cartItem, String userId) async {
-//     await firestoreServices.setData(
-//       path: ApiPaths.cartItem(userId, cartItem.id),
-//       data: cartItem.toMap(),
-//     );
-//   }
-// }
+  @override
+  Future<List<Product>> fetchProductsByCategory(String categoryName) async {
+    return firestore.getCollection<Product>(
+      path: ApiPaths.products(),
+      queryBuilder: (query) => query.where('category', isEqualTo: categoryName),
+      builder: (data, documentId) => Product.fromMap(data, documentId),
+    );
+  }
+
+  @override
+  Future<Product> fetchProductDetails(String productId) async {
+    return firestore.getDocument<Product>(
+      path: ApiPaths.product(productId),
+      builder: (data, documentId) => Product.fromMap(data, documentId),
+    );
+  }
+}

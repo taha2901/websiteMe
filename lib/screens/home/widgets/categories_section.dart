@@ -1,26 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:websiteme/core/constants/app_colors.dart';
 import 'package:websiteme/core/constants/app_constants.dart';
-import 'package:websiteme/models/category.dart';
-
+import 'package:websiteme/logic/cubits/category/categories_cubit.dart';
+import 'package:websiteme/logic/cubits/category/categories_states.dart';
 
 class CategoriesSection extends StatelessWidget {
   const CategoriesSection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final categories = demoCategories;
+    return BlocBuilder<CategoryCubit, CategoryState>(
+      builder: (context, state) {
+        if (state is CategoryLoading) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (state is CategoryLoaded) {
+          return _buildContent(context, state.categories);
+        } else if (state is CategoryError) {
+          return Center(child: Text('Error: ${state.message}'));
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
 
+  Widget _buildContent(BuildContext context, List categories) {
     return Container(
       width: double.infinity,
       padding: Responsive.pagePadding(context),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // العنوان
           Text(
             'Shop by Category',
-            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: Responsive.value(
                 context: context,
@@ -35,40 +46,33 @@ class CategoriesSection extends StatelessWidget {
           SizedBox(height: Responsive.spacing(context, 12)),
           Text(
             'Find what you need from our wide selection',
-            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: Responsive.fontSize(context, 16),
               color: AppColors.textLight,
             ),
           ),
           SizedBox(height: Responsive.spacing(context, 40)),
-
-          // Grid Categories
           LayoutBuilder(
             builder: (context, constraints) {
-              // عدد الأعمدة بناءً على عرض الشاشة
-              int crossAxisCount;
-              if (constraints.maxWidth < 600) {
-                crossAxisCount = 2;
-              } else if (constraints.maxWidth < 1000) {
-                crossAxisCount = 4;
-              } else {
-                crossAxisCount = 6;
-              }
+              int count = constraints.maxWidth < 600
+                  ? 2
+                  : constraints.maxWidth < 1000
+                      ? 4
+                      : 6;
 
               return GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: categories.length,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: crossAxisCount,
+                  crossAxisCount: count,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
                   childAspectRatio: 0.9,
                 ),
                 itemBuilder: (context, index) {
-                  final category = categories[index];
-                  return _CategoryCard(category: category);
+                  final c = categories[index];
+                  return _CategoryCard(category: c);
                 },
               );
             },
@@ -80,20 +84,18 @@ class CategoriesSection extends StatelessWidget {
 }
 
 class _CategoryCard extends StatelessWidget {
-  final CategoryModel category;
+  final dynamic category;
   const _CategoryCard({required this.category});
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       borderRadius: BorderRadius.circular(16),
-      onTap: () {
-        Navigator.pushNamed(
-          context,
-          '/products',
-          arguments: {'category': category.name},
-        );
-      },
+      onTap: () => Navigator.pushNamed(
+        context,
+        '/products',
+        arguments: {'category': category.name},
+      ),
       child: Ink(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -112,7 +114,6 @@ class _CategoryCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // أيقونة
               Container(
                 width: 70,
                 height: 70,
@@ -120,28 +121,12 @@ class _CategoryCard extends StatelessWidget {
                   color: AppColors.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Center(
-                  child: Text(
-                    category.icon,
-                    style: TextStyle(
-                      fontSize: Responsive.value(
-                        context: context,
-                        mobile: 28.0,
-                        tablet: 32.0,
-                        desktop: 36.0,
-                      ),
-                    ),
-                  ),
-                ),
+                child: Center(child: Image.network(category.image)),
               ),
               const SizedBox(height: 12),
-
-              // الاسم
               Text(
                 category.name,
                 textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: Responsive.fontSize(context, 14),
@@ -149,8 +134,6 @@ class _CategoryCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-
-              // عدد المنتجات
               Text(
                 '${category.productsCount} items',
                 style: TextStyle(

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:websiteme/logic/cubits/auth/auth_cubit.dart';
+import 'package:websiteme/logic/cubits/auth/auth_state.dart';
 import '../core/constants/app_colors.dart';
-import '../providers/auth_provider.dart';
 import 'cart_icon.dart';
 import 'search_bar.dart';
 
@@ -10,11 +11,13 @@ class Navbar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = context.watch<AuthProvider>();
     final width = MediaQuery.of(context).size.width;
     final isDesktop = width >= 1100;
     final isTablet = width >= 700 && width < 1100;
     final isMobile = width < 700;
+
+    // نجيب الحالة الحالية من AuthCubit
+    final state = context.watch<AuthCubit>().state;
 
     return AppBar(
       backgroundColor: Colors.white,
@@ -62,61 +65,67 @@ class Navbar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       actions: [
-        if (isDesktop) ..._buildDesktopActions(context, authProvider),
-        if (isTablet) ..._buildTabletActions(context, authProvider),
-        if (isMobile) ..._buildMobileActions(context),
+        if (isDesktop) ..._buildDesktopActions(context, state),
+        if (isTablet) ..._buildTabletActions(context, state),
+        if (isMobile) ..._buildMobileActions(context, state),
       ],
     );
   }
 
   // 💻 Desktop Actions
-  List<Widget> _buildDesktopActions(
-    BuildContext context,
-    AuthProvider authProvider,
-  ) {
+  List<Widget> _buildDesktopActions(BuildContext context, AuthState state) {
     return [
       _NavButton(label: 'Home', onTap: () => Navigator.pushNamed(context, '/')),
       _NavButton(
-          label: 'Products', onTap: () => Navigator.pushNamed(context, '/products')),
-      _NavButton(label: 'Categories', onTap: () {}),
-      _NavButton(label: 'Deals', onTap: () {}),
+        label: 'Products',
+        onTap: () => Navigator.pushNamed(context, '/products'),
+      ),
+      _NavButton(
+        label: 'Categories',
+        onTap: () {
+          Navigator.pushNamed(context, '/categories');
+        },
+      ),
+      _NavButton(
+        label: 'favourites',
+        onTap: () {
+          Navigator.pushNamed(context, '/favourites');
+        },
+      ),
       const SizedBox(width: 16),
       const CartIcon(),
       const SizedBox(width: 16),
-      _buildAuthActions(context, authProvider),
+      _buildAuthActions(context, state),
       const SizedBox(width: 16),
     ];
   }
 
-  // 📟 Tablet Actions (مختصرة)
-  List<Widget> _buildTabletActions(
-    BuildContext context,
-    AuthProvider authProvider,
-  ) {
+  // 📟 Tablet Actions
+  List<Widget> _buildTabletActions(BuildContext context, AuthState state) {
     return [
       const CartIcon(),
       IconButton(
         icon: const Icon(Icons.menu),
-        onPressed: () => _openDrawer(context, authProvider),
+        onPressed: () => _openDrawer(context, state),
       ),
     ];
   }
 
   // 📱 Mobile Actions
-  List<Widget> _buildMobileActions(BuildContext context) {
-    final authProvider = context.read<AuthProvider>();
+  List<Widget> _buildMobileActions(BuildContext context, AuthState state) {
     return [
       const CartIcon(),
       IconButton(
         icon: const Icon(Icons.menu),
-        onPressed: () => _openDrawer(context, authProvider),
+        onPressed: () => _openDrawer(context, state),
       ),
     ];
   }
 
   // 🔐 Authenticated / Guest
-  Widget _buildAuthActions(BuildContext context, AuthProvider authProvider) {
-    if (authProvider.isAuthenticated) {
+  Widget _buildAuthActions(BuildContext context, AuthState state) {
+    if (state is AuthAuthenticated) {
+      final user = state.user;
       return PopupMenuButton<int>(
         onSelected: (value) {
           switch (value) {
@@ -130,7 +139,7 @@ class Navbar extends StatelessWidget implements PreferredSizeWidget {
               Navigator.pushNamed(context, '/dashboard');
               break;
             case 3:
-              authProvider.logout();
+              context.read<AuthCubit>().logout();
               break;
           }
         },
@@ -140,7 +149,9 @@ class Navbar extends StatelessWidget implements PreferredSizeWidget {
               radius: 18,
               backgroundColor: AppColors.primary.withOpacity(0.1),
               child: Text(
-                authProvider.currentUser!.name[0].toUpperCase(),
+                (user.email?.isNotEmpty ?? false)
+                    ? user.email![0].toUpperCase()
+                    : '?',
                 style: const TextStyle(
                   color: AppColors.primary,
                   fontWeight: FontWeight.bold,
@@ -149,14 +160,14 @@ class Navbar extends StatelessWidget implements PreferredSizeWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              authProvider.currentUser!.name,
+              user.email ?? 'User',
               style: const TextStyle(color: AppColors.textPrimary),
             ),
             const Icon(Icons.arrow_drop_down, color: AppColors.textPrimary),
           ],
         ),
-        itemBuilder: (context) => [
-          const PopupMenuItem<int>(
+        itemBuilder: (context) => const [
+          PopupMenuItem<int>(
             value: 0,
             child: Row(
               children: [
@@ -166,7 +177,7 @@ class Navbar extends StatelessWidget implements PreferredSizeWidget {
               ],
             ),
           ),
-          const PopupMenuItem<int>(
+          PopupMenuItem<int>(
             value: 1,
             child: Row(
               children: [
@@ -176,19 +187,8 @@ class Navbar extends StatelessWidget implements PreferredSizeWidget {
               ],
             ),
           ),
-          if (authProvider.isAdmin)
-            const PopupMenuItem<int>(
-              value: 2,
-              child: Row(
-                children: [
-                  Icon(Icons.dashboard),
-                  SizedBox(width: 8),
-                  Text('Dashboard'),
-                ],
-              ),
-            ),
-          const PopupMenuDivider(),
-          const PopupMenuItem<int>(
+          PopupMenuDivider(),
+          PopupMenuItem<int>(
             value: 3,
             child: Row(
               children: [
@@ -219,7 +219,7 @@ class Navbar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   // 📂 Drawer (للتابلت والموبايل)
-  void _openDrawer(BuildContext context, AuthProvider authProvider) {
+  void _openDrawer(BuildContext context, AuthState state) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -242,18 +242,18 @@ class Navbar extends StatelessWidget implements PreferredSizeWidget {
               title: const Text('Deals'),
               onTap: () {},
             ),
-            if (authProvider.isAuthenticated)
+            if (state is AuthAuthenticated)
               ListTile(
                 leading: const Icon(Icons.person),
                 title: const Text('Profile'),
                 onTap: () => Navigator.pushNamed(context, '/profile'),
               ),
             const Divider(),
-            if (authProvider.isAuthenticated)
+            if (state is AuthAuthenticated)
               ListTile(
                 leading: const Icon(Icons.logout),
                 title: const Text('Logout'),
-                onTap: () => authProvider.logout(),
+                onTap: () => context.read<AuthCubit>().logout(),
               )
             else
               ListTile(

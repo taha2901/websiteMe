@@ -1,75 +1,87 @@
 class CategoryModel {
   final String id;
   final String name;
-  final String icon;
   final String image;
   final int productsCount;
 
   CategoryModel({
     required this.id,
     required this.name,
-    required this.icon,
     required this.image,
     required this.productsCount,
   });
+
+
+  factory CategoryModel.fromMap(Map<String, dynamic> data, String documentId) {
+  return CategoryModel(
+    id: documentId,
+    name: data['name'] ?? '',
+    image: data['image'] ?? '',
+    productsCount: data['productsCount'] ?? 0,
+  );
 }
 
+}
 
 final List<CategoryModel> demoCategories = [
   CategoryModel(
-    id: 'c1',
+    id: 'cat1',
     name: 'Electronics',
-    icon: '💻',
-    image: 'https://picsum.photos/600/400?10',
+    image: 'https://picsum.photos/600/400?1',
     productsCount: 58,
   ),
   CategoryModel(
-    id: 'c2',
+    id: 'cat2',
     name: 'Wearables',
-    icon: '⌚',
-    image: 'https://picsum.photos/600/400?11',
+    image: 'https://picsum.photos/600/400?2',
     productsCount: 34,
   ),
   CategoryModel(
-    id: 'c3',
+    id: 'cat3',
     name: 'Cameras',
-    icon: '📸',
-    image: 'https://picsum.photos/600/400?12',
+    image: 'https://picsum.photos/600/400?3',
     productsCount: 20,
   ),
   CategoryModel(
-    id: 'c4',
+    id: 'cat4',
     name: 'Accessories',
-    icon: '🎮',
-    image: 'https://picsum.photos/600/400?13',
+    image: 'https://picsum.photos/600/400?4',
     productsCount: 72,
   ),
   CategoryModel(
-    id: 'c1',
-    name: 'Electronics',
-    icon: '💻',
+    id: 'cat5',
+    name: 'Home Appliances',
+    image: 'https://picsum.photos/600/400?5',
+    productsCount: 43,
+  ),
+  CategoryModel(
+    id: 'cat6',
+    name: 'Beauty & Personal Care',
+    image: 'https://picsum.photos/600/400?6',
+    productsCount: 65,
+  ),
+  CategoryModel(
+    id: 'cat7',
+    name: 'Sports & Outdoors',
+    image: 'https://picsum.photos/600/400?7',
+    productsCount: 27,
+  ),
+  CategoryModel(
+    id: 'cat8',
+    name: 'Books & Stationery',
+    image: 'https://picsum.photos/600/400?8',
+    productsCount: 91,
+  ),
+  CategoryModel(
+    id: 'cat9',
+    name: 'Gaming',
+    image: 'https://picsum.photos/600/400?9',
+    productsCount: 38,
+  ),
+  CategoryModel(
+    id: 'cat10',
+    name: 'Groceries',
     image: 'https://picsum.photos/600/400?10',
-    productsCount: 58,
-  ),
-  CategoryModel(
-    id: 'c2',
-    name: 'Wearables',
-    icon: '⌚',
-    image: 'https://picsum.photos/600/400?11',
-    productsCount: 34,
-  ),
-  CategoryModel(
-    id: 'c3',
-    name: 'Cameras',
-    icon: '📸',
-    image: 'https://picsum.photos/600/400?12',
-    productsCount: 20,
-  ),
-  CategoryModel(
-    id: 'c4',
-    name: 'Accessories',
-    icon: '🎮',
-    image: 'https://picsum.photos/600/400?13',
-    productsCount: 72,
+    productsCount: 120,
   ),
 ];
