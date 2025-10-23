@@ -26,26 +26,29 @@ class _ProductCardState extends State<ProductCard> {
     final authState = context.watch<AuthCubit>().state;
     final user = authState is AuthAuthenticated ? authState.user : null;
 
-    final card = GestureDetector(
-      onTap: () => Navigator.pushNamed(
-        context,
-        '/product-detail',
-        arguments: widget.product,
-      ),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        transform: _isHovered && Responsive.isDesktop(context)
-            ? (Matrix4.identity()..scale(1.02))
-            : Matrix4.identity(),
-        child: Card(
-          elevation: _isHovered ? 8 : 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [_buildImage(context, user), _buildInfo(context)],
+    final card = Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => Navigator.pushNamed(
+          context,
+          '/product-detail',
+          arguments: widget.product,
+        ),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          transform: _isHovered && Responsive.isDesktop(context)
+              ? (Matrix4.identity()..scale(1.02))
+              : Matrix4.identity(),
+          child: Card(
+            elevation: _isHovered ? 8 : 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [_buildImage(context, user), _buildInfo(context)],
+            ),
           ),
         ),
       ),
@@ -207,7 +210,7 @@ class _ProductCardState extends State<ProductCard> {
                       fontWeight: FontWeight.bold,
                       fontSize: Responsive.value(
                         context: context,
-                        mobile: 16.0,
+                        mobile: 14.0,
                         tablet: 18.0,
                         desktop: 20.0,
                       ),

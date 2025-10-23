@@ -97,7 +97,7 @@ class ProductsScreen extends StatelessWidget {
             crossAxisCount: crossAxisCount,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
-            childAspectRatio: 0.55,
+            childAspectRatio: 0.52,
           ),
           itemBuilder: (context, index) => ProductCard(product: products[index]),
         ),

@@ -25,7 +25,6 @@ import 'screens/products/product_detail_screen.dart';
 import 'screens/cart/cart_screen.dart';
 import 'screens/cart/checkout_screen.dart';
 import 'screens/profile/profile_screen.dart';
-import 'screens/profile/orders_history_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 import 'core/constants/app_colors.dart';
 import 'package:firebase_core/firebase_core.dart';

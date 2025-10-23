@@ -21,15 +21,9 @@ class DefaultFirebaseOptions {
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for android - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for macos - '
@@ -61,4 +55,22 @@ class DefaultFirebaseOptions {
     storageBucket: 'websiteone-dde44.firebasestorage.app',
     measurementId: 'G-V1L74KZ60D',
   );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyBN9nZynk9kIK2mZyTCvldFjDXb8IiuMGo',
+    appId: '1:916458160199:ios:26f250c7cf12ddb7fcf162',
+    messagingSenderId: '916458160199',
+    projectId: 'websiteone-dde44',
+    storageBucket: 'websiteone-dde44.firebasestorage.app',
+    iosBundleId: 'com.example.websiteme',
+  );
+
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyCc8ouOHg6tCLOZ_NUdx0-tA3lSO7m12KY',
+    appId: '1:916458160199:android:d84f42f83f30e375fcf162',
+    messagingSenderId: '916458160199',
+    projectId: 'websiteone-dde44',
+    storageBucket: 'websiteone-dde44.firebasestorage.app',
+  );
+
 }

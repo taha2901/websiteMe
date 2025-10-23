@@ -239,8 +239,10 @@ class Navbar extends StatelessWidget implements PreferredSizeWidget {
             ),
             ListTile(
               leading: const Icon(Icons.local_offer),
-              title: const Text('Deals'),
-              onTap: () {},
+              title: const Text('favourites'),
+              onTap: () {
+                Navigator.pushNamed(context, '/favourites');
+              },
             ),
             if (state is AuthAuthenticated)
               ListTile(

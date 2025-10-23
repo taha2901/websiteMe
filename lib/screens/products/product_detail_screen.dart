@@ -1,4 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:websiteme/logic/cubits/auth/auth_cubit.dart';
+import 'package:websiteme/logic/cubits/auth/auth_state.dart';
+import 'package:websiteme/logic/cubits/cart/cart_cubit.dart';
+import 'package:websiteme/logic/cubits/cart/cart_states.dart';
+import 'package:websiteme/logic/cubits/favourite/fav_cubit.dart';
+import 'package:websiteme/logic/cubits/favourite/fav_states.dart';
 import '../../models/product.dart';
 import '../../widgets/navbar.dart';
 import '../../core/constants/app_colors.dart';
@@ -70,32 +77,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   Widget _buildContent({required bool isTablet, required bool isDesktop}) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        // ✅ القسم الرئيسي: الصور + تفاصيل المنتج
-        Flex(
-          direction: isDesktop ? Axis.horizontal : Axis.vertical,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Flexible(
-              flex: 1,
-              child: _buildImageGallery(
-                height: isDesktop
-                    ? 500
-                    : isTablet
-                        ? 400
-                        : 300,
-              ),
-            ),
-            SizedBox(
-              width: isDesktop ? 48 : 0,
-              height: isDesktop ? 0 : 24,
-            ),
-            Flexible(
-              flex: 1,
-              child: _buildProductInfo(isTablet: isTablet),
-            ),
-          ],
+        Flexible(
+          fit: FlexFit.loose,
+          child: _buildImageGallery(
+            height: isDesktop
+                ? 500
+                : isTablet
+                ? 400
+                : 300,
+          ),
         ),
+        SizedBox(width: isDesktop ? 48 : 0, height: isDesktop ? 0 : 24),
+        Flexible(flex: 1, child: _buildProductInfo(isTablet: isTablet)),
         const SizedBox(height: 40),
         _buildProductDetails(),
       ],
@@ -227,10 +222,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         const SizedBox(width: 8),
         Text(
           '${widget.product.rating} (${widget.product.reviewsCount} reviews)',
-          style: const TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 15,
-          ),
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 15),
         ),
       ],
     );
@@ -293,10 +285,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             padding: const EdgeInsets.only(bottom: 6),
             child: Row(
               children: [
-                const Icon(Icons.check_circle,
-                    color: AppColors.success, size: 18),
+                const Icon(
+                  Icons.check_circle,
+                  color: AppColors.success,
+                  size: 18,
+                ),
                 const SizedBox(width: 8),
-                Flexible(child: Text(feature, style: const TextStyle(fontSize: 14))),
+                Flexible(
+                  child: Text(feature, style: const TextStyle(fontSize: 14)),
+                ),
               ],
             ),
           ),
@@ -335,24 +332,34 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Quantity:',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+        const Text(
+          'Quantity:',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 12),
         Row(
           children: [
-            _buildQuantityButton(Icons.remove,
-                _quantity > 1 ? () => setState(() => _quantity--) : null),
+            _buildQuantityButton(
+              Icons.remove,
+              _quantity > 1 ? () => setState(() => _quantity--) : null,
+            ),
             Container(
               width: 50,
               alignment: Alignment.center,
-              child: Text('$_quantity',
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold)),
+              child: Text(
+                '$_quantity',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-            _buildQuantityButton(Icons.add,
-                _quantity < widget.product.stock
-                    ? () => setState(() => _quantity++)
-                    : null),
+            _buildQuantityButton(
+              Icons.add,
+              _quantity < widget.product.stock
+                  ? () => setState(() => _quantity++)
+                  : null,
+            ),
           ],
         ),
       ],
@@ -360,34 +367,99 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _buildActionButtons() {
+    final authState = context.watch<AuthCubit>().state;
+    final user = authState is AuthAuthenticated ? authState.user : null;
+
     return Row(
       children: [
         Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () {
-              setState(() {
-                _cart.add({'product': widget.product, 'quantity': _quantity});
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Added $_quantity item(s) of "${widget.product.name}" to cart',
-                  ),
+          child: BlocBuilder<CartCubit, CartState>(
+            builder: (context, cartState) {
+              bool isInCart = false;
+              if (cartState is CartLoaded) {
+                isInCart = cartState.items.any(
+                  (i) => i.productId == widget.product.id,
+                );
+              }
+              return ElevatedButton.icon(
+                onPressed: () {
+                  if (user == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please log in to add to cart.'),
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+                    return;
+                  }
+                  final cartCubit = context.read<CartCubit>();
+
+                  if (isInCart) {
+                    cartCubit.removeFromCart(widget.product.id);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          '${widget.product.name} removed from cart',
+                        ),
+                      ),
+                    );
+                  } else {
+                    cartCubit.addToCartFromProduct(
+                      widget.product,
+                      quantity: _quantity,
+                    );
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${widget.product.name} added to cart!'),
+                      ),
+                    );
+                  }
+                },
+                icon: Icon(
+                  isInCart
+                      ? Icons.remove_shopping_cart
+                      : Icons.add_shopping_cart,
+                ),
+                label: Text(isInCart ? 'Remove from Cart' : 'Add to Cart'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isInCart ? Colors.grey : AppColors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               );
             },
-            icon: const Icon(Icons.shopping_cart),
-            label: const Text('Add to Cart'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
           ),
         ),
         const SizedBox(width: 12),
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.favorite_border),
-          iconSize: 26,
+        BlocBuilder<FavouriteCubit, FavouriteState>(
+          builder: (context, state) {
+            final favCubit = context.read<FavouriteCubit>();
+            final isFav = favCubit.isFavourite(widget.product.id);
+            return IconButton(
+              onPressed: () {
+                if (user == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please log in to add favourites.'),
+                      duration: Duration(seconds: 1),
+                    ),
+                  );
+                  return;
+                }
+                favCubit.toggleFavourite(widget.product);
+              },
+              icon: Icon(
+                isFav ? Icons.favorite : Icons.favorite_border,
+                color: isFav ? AppColors.error : Colors.grey,
+              ),
+              iconSize: 26,
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.white,
+                shape: const CircleBorder(),
+                elevation: 2,
+              ),
+            );
+          },
         ),
       ],
     );
@@ -417,8 +489,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Product Details',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              const Text(
+                'Product Details',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 20),
               if (widget.product.specifications != null)
                 ...widget.product.specifications!.entries.map(

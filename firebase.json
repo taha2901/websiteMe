@@ -1,29 +1,23 @@
 {
-  "hosting": {
-    "site": "websiteone-dde44",
-    "public": "build/web",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ]
-  },
-  "flutter": {
-    "platforms": {
-      "dart": {
-        "lib/firebase_options.dart": {
-          "projectId": "websiteone-dde44",
-          "configurations": {
-            "web": "1:916458160199:web:397806d50e63a4f6fcf162"
-          }
+    "flutter": {
+        "platforms": {
+            "android": {
+                "default": {
+                    "projectId": "websiteone-dde44",
+                    "appId": "1:916458160199:android:d84f42f83f30e375fcf162",
+                    "fileOutput": "android/app/google-services.json"
+                }
+            },
+            "dart": {
+                "lib/firebase_options.dart": {
+                    "projectId": "websiteone-dde44",
+                    "configurations": {
+                        "android": "1:916458160199:android:d84f42f83f30e375fcf162",
+                        "ios": "1:916458160199:ios:26f250c7cf12ddb7fcf162",
+                        "web": "1:916458160199:web:397806d50e63a4f6fcf162"
+                    }
+                }
+            }
         }
-      }
     }
-  }
 }

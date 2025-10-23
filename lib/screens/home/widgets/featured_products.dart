@@ -67,7 +67,7 @@ class FeaturedProducts extends StatelessWidget {
 
   Widget _buildMobileList(List products) {
     return SizedBox(
-      height: 350,
+      height: 360,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: products.length,
